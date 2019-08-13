@@ -29,10 +29,8 @@ class pythread(threading.Thread):
         while True:
             self.nEnd = time.clock()*MILLION    # (us)
             if self.nEnd-self.nStart < self.interval_ms*1000:
-                self.bIdle = True
+                pass
             else:
-                self.bIdle = False
-            if self.bIdle == False:
                 # To do
                 self.cnt += 1000.0/MILLION*self.interval_ms
                 self.nStart = self.nEnd;

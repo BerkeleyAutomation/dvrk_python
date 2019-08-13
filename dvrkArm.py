@@ -71,7 +71,6 @@ class dvrkArm(object):
         else:
             rospy.logdebug(rospy.get_caller_id() + ' -> ROS already initialized')
 
-
     """
     Callback function
     """
@@ -96,7 +95,6 @@ class dvrkArm(object):
         """Callback for the current jaw position.
         """
         self.__position_jaw_current = data.position
-
 
     """
     Get States function
@@ -141,7 +139,6 @@ class dvrkArm(object):
         if unit == "deg":
             jaw = self.rad_to_deg(self.__position_jaw_current)
         return jaw
-
 
     """
     Set States function
@@ -255,7 +252,6 @@ class dvrkArm(object):
         if not self.__goal_reached:
             return False
         return True
-
 
     """
     Conversion function
