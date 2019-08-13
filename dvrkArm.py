@@ -106,7 +106,7 @@ class dvrkArm(object):
         """
         return self.__position_cartesian_current
 
-    def get_current_pose(self,unit='rad'):    # Unit: pos in (mm) rot in (rad) or (deg)
+    def get_current_pose(self,unit='rad'):    # Unit: pos in (m) rot in (rad) or (deg)
         """
 
         :param unit: 'rad' or 'deg'

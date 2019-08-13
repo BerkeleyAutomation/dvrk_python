@@ -1,11 +1,8 @@
 import dvrkArm
 import threading
 import time
-import math
 import rospy
 import numpy as np
-
-from sensor_msgs.msg import JointState
 
 MILLION = float(10**6)
 
@@ -25,7 +22,7 @@ class dvrkMotion(threading.Thread):
         self.rate = rospy.Rate(1000.0 / self.interval_ms)
 
         # Motion variables
-        self.pos_org = [0.0, 0.0, -0.13]  #   xyz position in (mm)
+        self.pos_org = [0.0, 0.0, -0.13]  #   xyz position in (m)
         self.rot_org = [0.0, 0.0, 0.0]    #   ZYX Euler angle in (rad)
         self.pos_pick = [0.0, 0.0]        #   xy coordinate for the cloth pick-up
         self.rot_pick = [0.0, 0.0, 0.0]   #   ZYX Euler angle in (rad)
@@ -44,6 +41,15 @@ class dvrkMotion(threading.Thread):
         self.pos_org = pos
 
     def set_pose_pickup(self, pos_pick, pos_drop, rot_pick, unit='rad'):
+        """
+
+        :param pos_pick: x,y coordinate to pick up (in background space)
+        :param pos_drop: x,y coordinate to drop (in background spcae)
+        :param rot_pick: roll angle of grasper to pick up
+        :param unit: position in (m) and rotation in (deg) or (rad)
+        :return:
+        """
+
         if unit == 'deg':
             rot_pick = rot_pick*3.141591/180.0
 
@@ -90,13 +96,6 @@ class dvrkMotion(threading.Thread):
                 self.nStart = self.nEnd;
             if stop():
                 break
-
-    """
-    Motion
-    """
-    # def sinusoidal_motion(self, amp=0.01, period=2.0, type='position_x'):
-    #     if type == 'position_x':
-    #         self.pos_des = amp*math.sin(2*math.pi*self.t/period)
 
     """
     Conversion function
