@@ -1,7 +1,27 @@
-from sensor_msgs.msg import JointState
+import matplotlib.pyplot as plt
+import numpy as np
+import time
 
-a = JointState(position=list([1,2,3]))
-# a.position = [1,2,3,4,5,6,7,8,9]
 
-# JointState(name=self._ik.joints, position=list(result[1]))
-print a
+t = np.arange(0,6,0.01)
+# print np.cos(t)
+
+# Lemniscate of Bernoulli
+T = 6
+t_ = t/T*2*np.pi + np.pi/2
+a = 0.03
+ratio = 0.8
+x = ratio*(a * 2**0.5 * np.cos(t_)) / (np.sin(t_)*np.sin(t_) + 1)
+y = (a * 2**0.5 * np.cos(t_) * np.sin(t_)) / (np.sin(t_)*np.sin(t_) + 1)
+
+plt.plot(x,y)
+plt.xlim([-0.06, 0.06])
+plt.ylim([-0.06, 0.06])
+# plt.show()
+
+a = np.array([1])
+print a.shape
+
+if a.shape == (0,):
+    print "haha"
+    print a, type(a), type(a.shape)

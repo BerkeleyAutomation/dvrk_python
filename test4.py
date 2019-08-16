@@ -19,7 +19,7 @@ rate = rospy.Rate(1000.0 / interval_ms)
 t_sleep = 0.5
 while not rospy.is_shutdown():
     try:
-        ps.set_jaw(-5, 'deg')
+        ps.set_jaw(0, 'deg')
         ps.set_jaw(50, 'deg')
         rate.sleep()
     except rospy.ROSInterruptException:
