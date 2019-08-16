@@ -1,0 +1,7 @@
+
+
+*.tar.gz
+*.pyc
+
+*.swo
+*.swp
