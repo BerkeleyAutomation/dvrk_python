@@ -3,8 +3,8 @@ import threading
 import time
 import rospy
 import numpy as np
+import utils as U
 
-MILLION = float(10**6)
 
 class dvrkClothsim(threading.Thread):
     """
@@ -85,24 +85,15 @@ class dvrkClothsim(threading.Thread):
 
     def run(self, stop):
         while True:
-            self.nEnd = time.clock() * MILLION  # (us)
+            self.nEnd = time.clock() * U.MILLION  # (us)
             if self.nEnd - self.nStart < self.interval_ms * 1000:
                 pass
             else:
                 # To do here
-                self.t += 1000.0 / MILLION * self.interval_ms
+                self.t += 1000.0 / U.MILLION * self.interval_ms
                 self.nStart = self.nEnd;
             if stop():
                 break
-
-    """
-    Conversion function
-    """
-    def rad_to_deg(self,rad):
-        return np.array(rad) *180./np.pi
-
-    def deg_to_rad(self,deg):
-        return np.array(deg) *np.pi/180.
 
 
 if __name__ == "__main__":
