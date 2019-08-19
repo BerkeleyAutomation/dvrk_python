@@ -52,7 +52,7 @@ def init_conf_curve():
     p2.set_pose(pos_curve_org2, rot_curve_org2, 'deg')
     p2.set_jaw(jaw_curve_org2, 'deg')
 
-T = 5   # period
+T = 3   # period
 def make_curve(t):
     # Lemniscate of Bernoulli
     a = 0.03
@@ -60,21 +60,23 @@ def make_curve(t):
     t_ = t/T*2*np.pi + np.pi/2
     x = ratio*(a * 2 ** 0.5 * np.cos(t_)) / (np.sin(t_) * np.sin(t_) + 1)
     y = (a * 2 ** 0.5 * np.cos(t_) * np.sin(t_)) / (np.sin(t_) * np.sin(t_) + 1)
+    jaw = 25*np.sin(2*np.pi*t) + 25
     x_offset = 0.04
     y_offset = 0.04
     pos_lem = [x+x_offset, y+y_offset, -0.13]
     rot_lem = [0.0, 0.0, 0.0]
-    jaw_lem = [0]
+    jaw_lem = [jaw]
     p1.set_pose(pos_lem, rot_lem, 'deg', False)
     p1.set_jaw(jaw_lem, 'deg', False)
 
     x = ratio*(a * 2 ** 0.5 * np.cos(t_)) / (np.sin(t_) * np.sin(t_) + 1)
     y = (a * 2 ** 0.5 * np.cos(t_) * np.sin(t_)) / (np.sin(t_) * np.sin(t_) + 1)
+    jaw2 = 25 * np.sin(2 * np.pi * t) + 25
     x_offset2 = -0.04
     y_offset2 = 0.04
     pos_lem = [x+x_offset2, y+y_offset2, -0.13]
     rot_lem = [0.0, 0.0, 0.0]
-    jaw_lem = [0]
+    jaw_lem = [jaw2]
     p2.set_pose(pos_lem, rot_lem, 'deg', False)
     p2.set_jaw(jaw_lem, 'deg', False)
 
@@ -82,7 +84,7 @@ if __name__ == "__main__":
     # print p1.get_current_pose('deg')
     # time.sleep(1)
     # print p2.get_current_pose('deg')
-    DEMO = 'teleop'
+    DEMO = 'curve'
     if DEMO == 'teleop':
         make_teleop_conf()
     elif DEMO == 'curve':
@@ -100,4 +102,4 @@ if __name__ == "__main__":
         while True:
             p.move_pose_pickup([0.06, 0.0], [0.04, 0.02], 0, 'deg')
             p.move_pose_pickup([0.06, 0.05], [0.04, 0.03], 0, 'deg')
-            # p.move_pose_pickup([0.0, 0.05], [0.02, 0.03], 0, 'deg')
+            p.move_pose_pickup([0.0, 0.05], [0.02, 0.03], 0, 'deg')
