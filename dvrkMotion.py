@@ -1,4 +1,4 @@
-from dvrkArm import dvrkArm
+import dvrkArm
 import threading
 import time
 import rospy
@@ -6,7 +6,7 @@ import numpy as np
 import utils as U
 
 
-class dvrkClothsim(threading.Thread):
+class dvrkMotion(threading.Thread):
     """
     Motion library for dvrk
     """
@@ -14,7 +14,7 @@ class dvrkClothsim(threading.Thread):
         threading.Thread.__init__(self)
         self.__ros_namespace = ros_namespace
         self.interval_ms = interval_ms
-        self.arm = dvrkArm('/PSM1')
+        self.arm = dvrkArm.dvrkArm('/PSM1')
         self.t = 0.0
         self.nStart = 0.0
         self.nEnd = 0.0
@@ -30,8 +30,9 @@ class dvrkClothsim(threading.Thread):
         self.jaw_opening = 40*3.141592/180.0
         self.jaw_closing = 0*3.141592/180.0
 
+
     """
-    Motion Creating function for cloth simulation
+    Motion Creating function
     """
     def set_position_origin(self, pos, rot, unit='rad'):
         self.rot_org[0] = rot
@@ -39,7 +40,7 @@ class dvrkClothsim(threading.Thread):
             self.rot_org[0] = rot*3.141592/180.0
         self.pos_org = pos
 
-    def move_pose_pickup(self, pos_pick, pos_drop, rot_pick, unit='rad'):
+    def set_pose_pickup(self, pos_pick, pos_drop, rot_pick, unit='rad'):
         """
 
         :param pos_pick: x,y coordinate to pick up (in background space)
@@ -48,6 +49,7 @@ class dvrkClothsim(threading.Thread):
         :param unit: position in (m) and rotation in (deg) or (rad)
         :return:
         """
+
         if unit == 'deg':
             rot_pick = rot_pick*3.141591/180.0
 
@@ -95,12 +97,11 @@ class dvrkClothsim(threading.Thread):
             if stop():
                 break
 
-
 if __name__ == "__main__":
-    p = dvrkClothsim()
-    # p.start()
+    p = dvrkMotion()
+    p.start()
     p.set_position_origin([-0.05, 0.02, -0.14], 0, 'deg')
     while True:
-        p.move_pose_pickup([0.08, 0.0], [0.06, 0.02], 0, 'deg')
-        p.move_pose_pickup([0.08, 0.07], [0.06, 0.05], 0, 'deg')
-        p.move_pose_pickup([0.0, 0.07], [0.02, 0.05], 0, 'deg')
+        p.set_pose_pickup([0.08, 0.0], [0.06, 0.02], 0, 'deg')
+        p.set_pose_pickup([0.08, 0.07], [0.06, 0.05], 0, 'deg')
+        p.set_pose_pickup([0.0, 0.07], [0.02, 0.05], 0, 'deg')

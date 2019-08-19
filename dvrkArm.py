@@ -1,6 +1,7 @@
 import threading
 import rospy
 
+import utils as U
 import numpy as np
 import PyKDL
 
@@ -114,7 +115,7 @@ class dvrkArm(object):
         """
         pos,rot = self.PyKDLFrame_to_NumpyArray(self.__position_cartesian_current)
         if unit == 'deg':
-            rot = self.rad_to_deg(rot)
+            rot = U.rad_to_deg(rot)
         return pos,rot
 
     def get_current_joint(self, unit='rad'):
@@ -125,7 +126,7 @@ class dvrkArm(object):
         """
         joint = self.__position_joint_current
         if unit == 'deg':
-            joint = self.rad_to_deg(self.__position_joint_current)
+            joint = U.rad_to_deg(self.__position_joint_current)
             joint[2] = self.__position_joint_current[2]
         return joint
 
@@ -137,7 +138,7 @@ class dvrkArm(object):
         """
         jaw = np.float64(self.__position_jaw_current)
         if unit == "deg":
-            jaw = self.rad_to_deg(self.__position_jaw_current)
+            jaw = U.rad_to_deg(self.__position_jaw_current)
         return jaw
 
     """
@@ -160,7 +161,7 @@ class dvrkArm(object):
         :param wait_callback: True or False
         """
         if unit == 'deg':
-            rot = self.deg_to_rad(rot)
+            rot = U.deg_to_rad(rot)
         # set in position cartesian mode
         frame = self.NumpyArraytoPyKDLFrame(pos, rot)
         msg = posemath.toMsg(frame)
@@ -195,7 +196,7 @@ class dvrkArm(object):
         :param wait_callback: True or False
         """
         if unit == 'deg':
-            joint = self.deg_to_rad(joint)
+            joint = U.deg_to_rad(joint)
         msg = JointState()
         msg.position = joint
         if wait_callback:
@@ -228,7 +229,7 @@ class dvrkArm(object):
         :param wait_callback: True or False
         """
         if unit == 'deg':
-            jaw = self.deg_to_rad(jaw)
+            jaw = U.deg_to_rad(jaw)
         msg = JointState()
         msg.position = [jaw]
         if wait_callback:
@@ -256,12 +257,6 @@ class dvrkArm(object):
     """
     Conversion function
     """
-    def rad_to_deg(self,rad):
-        return np.array(rad) *180./np.pi
-
-    def deg_to_rad(self,deg):
-        return np.array(deg) *np.pi/180.
-
     def PyKDLFrame_to_NumpyArray(self,frame):
         pos = np.array([frame.p[0], frame.p[1], frame.p[2]])
         rz, ry, rx = self.__position_cartesian_current.M.GetEulerZYX()
