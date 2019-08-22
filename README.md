@@ -2,9 +2,6 @@
 
 Requires Python 2.7 and using our davinci0 machine.
 
-**TODO**: instructions for virtualenv integration, etc? Right now we are not
-using virtualenvs and just using the system Python on davinci0.
-
 Use the following core API:
 
 - `dvrkArm.py`: an API wrapping around the ROS messages to get or set positions.
@@ -12,6 +9,9 @@ Use the following core API:
 Other supporting files are `dvrkMotion.py` and `dvrkClothSim.py` for moving the
 arms.
 
+## Images and Python3
+
+See `image_manip/README.md` for details on Python3 integration.
 
 ## Quick Start
 

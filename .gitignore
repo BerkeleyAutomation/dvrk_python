@@ -1,7 +1,17 @@
 
-
+# Stuff we always want to exclude
 *.tar.gz
 *.pyc
+__pycache__
 
+# vim stuff
 *.swo
 *.swp
+
+# Images and results
+*.jpg
+*.png
+*.txt
+
+# Random directories
+data/
