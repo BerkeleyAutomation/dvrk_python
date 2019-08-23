@@ -59,9 +59,9 @@ if __name__ == "__main__":
     raw_board = 6
     column_board = 6
 
-    if path.exists('mapping_table.txt'):
+    if path.exists('mapping_table'):
         # import data from file
-        data_default = np.loadtxt("mapping_table.txt", delimiter=',')
+        data_default = np.loadtxt("mapping_table", delimiter=',')
     else:
         # if file does not exist, set default
         data_default = np.zeros((raw_board*column_board,5))
