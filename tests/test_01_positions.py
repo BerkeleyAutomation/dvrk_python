@@ -1,13 +1,13 @@
 import sys
-sys.path.append('.')
-import dvrkArm
+sys.path.append('..')
+from dvrkArm import dvrkArm
 import time
 import math
 import rospy
 
 
 if __name__ == "__main__":
-    p = dvrkArm.dvrkArm('/PSM1')
+    p = dvrkArm('/PSM2')
     pose_frame = p.get_current_pose_frame()
     pose_rad = p.get_current_pose()
     pose_deg = p.get_current_pose(unit='deg')
@@ -26,7 +26,6 @@ if __name__ == "__main__":
 
     targ_pos = [0.04845971,  0.05464517, -0.12231114]
     targ_rot = [4.65831872, -0.69974499,  0.87412989]
-    p.set_pose(pos=targ_pos, rot=targ_rot, unit='rad')
 
     # I.e., the gripper angle.
     p.set_jaw(jaw=10, unit='deg')
