@@ -120,6 +120,6 @@ if __name__=='__main__':
         #cv2.imwrite("d_img_0.png", d_img)
         cv2.imwrite("/home/davinci0/adi/dvrk_python/dvrk_img/c_img_" + str(i) + ".png", c_img)
         i += 1
-        time.sleep(1)
+        time.sleep(25)
     
     rospy.spin()
