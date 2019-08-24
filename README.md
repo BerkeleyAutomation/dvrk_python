@@ -5,9 +5,7 @@ Requires Python 2.7 and using our davinci0 machine.
 Use the following core API:
 
 - `dvrkArm.py`: an API wrapping around the ROS messages to get or set positions.
-
-Other supporting files are `dvrkMotion.py` and `dvrkClothSim.py` for moving the
-arms.
+- `dvrkClothSim.py` for moving the arms.
 
 ## Experimental Usage
 
