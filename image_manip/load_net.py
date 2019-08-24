@@ -5,10 +5,16 @@ to show intuition in a paper.
 
 It's simlar to the version in baselines-fork but I thought it'd be better to
 use a file contained within dvrk_python, or at least as reasonably as we can.
+
+The removal of the Python2.7 package is necessary due to ROS, see:
+    https://stackoverflow.com/questions/43019951/
 """
 import os
-import cv2
 import sys
+ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
+if ros_path in sys.path:
+    sys.path.remove(ros_path)
+import cv2
 import time
 import pickle
 import functools
@@ -18,8 +24,6 @@ from os.path import join
 import baselines.common.tf_util as U
 from baselines.imit.models import Actor
 import load_config as cfg
-#Adi: Importing capture_image.py
-import capture_image as cap
 import datetime
 
 
@@ -167,7 +171,7 @@ if __name__ == '__main__':
         sys.exit()
 
     # Let this code run in an infinite loop.
-    print('\nNetwork loaded successfully.')
+    print('\nNetwork loaded successfully!')
     print('Now we\'re waiting for images in: {}'.format(cfg.DVRK_IMG_PATH))
     t_start = time.time()
     beeps = 0
@@ -181,10 +185,12 @@ if __name__ == '__main__':
         if beeps % 5 == 0:
             print('  time: {:.2f}s (i.e., {:.2f}m)'.format(t_elapsed, t_elapsed/60.))
 
+        # -------------------------------------------------------------------- #
         # HUGE ASSUMPTION: assume we store image sequentially and do not
         # override them. That means the images should be appearing in
         # alphabetical order in chronological order. We can compute statistics
         # about these and the actions in separate code.
+        # -------------------------------------------------------------------- #
         dvrk_img_paths = sorted(
             [join(cfg.DVRK_IMG_PATH,x) for x in os.listdir(cfg.DVRK_IMG_PATH) \
                     if x[-4:]=='.png']

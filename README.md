@@ -15,20 +15,29 @@ Performing our experiments involves several steps, due to loading a separate
 neural network (using a Python3 virtualenv). Roughly, the steps are:
 
 1. Activate the robot via `roscore`, then (in a separate tab) run `./teleop` in
-`~/catkin_ws`.
+`~/catkin_ws` and click HOME.
 
-2. In another tab in `/catkin_ws/src/zivid-ros/zivid_samples/launch`, run the
+2. In another tab in `~/catkin_ws/src/zivid-ros/zivid_samples/launch`, run the
 camera capture script:
 
 ```
 roslaunch zivid_samples sample_capture_py.launch 
 ```
 
-3. In another tab in `dvrk_python/image_manip`, run `python capture_image.py`.
+This will open up rviz, and generate some flashing lights.
 
-4. In yet another tab, *set up a new Python 3 virtualenv*, and run `python
-load_net.py`.  See `image_manip/README.md` for details on Python3 integration.
+3. In yet another tab, *set up a new Python 3 virtualenv*, and run `python
+load_net.py`. See `image_manip/README.md` for detailed instructions.  This
+script runs continuously in the background and checks for any new images in the
+target directory.
 
+
+Other helpful pointers:
+
+You can run `python image_manip/capture_image.py`, *using the system Python on
+our machine* (i.e., not a virtualenv). The main method shows how to periodically
+query and save images from the camera into `.png` files.  We import this in code
+above.
 
 
 

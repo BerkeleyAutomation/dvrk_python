@@ -1,4 +1,6 @@
-"""Use for processing dvrk images.
+"""ONLY FOR DEBUGGING DIFFERENT IMAGE PROCESSING CODE
+
+Not meant to be used in the actual dvrk experiments.
 """
 import cv2
 import sys
