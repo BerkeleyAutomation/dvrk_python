@@ -1,6 +1,7 @@
 """Adjust configuration here for settings.
 
-This is used in the neural network loading code.
+This is used in the neural network loading code. THIS WILL REQUIRE PYTHON 3, so
+DO NOT MERGE WITH OUR OTHER CONFIG FILE in the top-level repository.
 """
 import os
 import sys

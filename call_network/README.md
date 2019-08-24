@@ -63,7 +63,7 @@ in the correct directory to read from.
 In a separate terminal tab, in a Python3 virtualenv, run:
 
 ```
-python image_manip/load_net.py
+python call_network/load_net.py
 ```
 
 and then run the dvrk code. The script should loop forever, periodically

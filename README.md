@@ -20,25 +20,38 @@ neural network (using a Python3 virtualenv). Roughly, the steps are:
 2. In another tab in `~/catkin_ws/src/zivid-ros/zivid_samples/launch`, run the
 camera capture script:
 
-```
-roslaunch zivid_samples sample_capture_py.launch 
-```
+  ```
+  roslaunch zivid_samples sample_capture_py.launch 
+  ```
 
-This will open up rviz, and generate some flashing lights.
+  This will open up rviz, and generate some flashing lights.
 
 3. In yet another tab, *set up a new Python 3 virtualenv*, and run `python
-load_net.py`. See `image_manip/README.md` for detailed instructions.  This
+load_net.py`. See `call_network/README.md` for detailed instructions.  This
 script runs continuously in the background and checks for any new images in the
 target directory.
 
+4. Check the configuration file in `config.py` which will contain a bunch of
+settings we can adjust. *In particular, adjust which calibration data we should
+be using*. They are in the form of text files.
+
+5. Finally, run `python run.py` for experiments, using the system Python. This
+requires some keyboard strokes. *The code runs one episode* and then terminates.
+Repeat for more episodes.
 
 Other helpful pointers:
 
-You can run `python image_manip/capture_image.py`, *using the system Python on
-our machine* (i.e., not a virtualenv). The main method shows how to periodically
-query and save images from the camera into `.png` files.  We import this in code
-above.
+- You can run `python camera.py`, *using the system Python on our machine*
+  (i.e., not a virtualenv). The main method shows how to periodically query and
+  save images from the camera into `.png` files.  We import this in code above.
 
+- For quick testing of the da vinci with resorting to the machinery of the
+  experimental pipeline, use `python dvrkClothSim.py` (for generic motion) or
+  one of the test scripts in `tests/` (for calibration accuracy).
+
+- For calibration, we do this to can map from neural network coordinates to
+  actions. We use a grid of known points, and then apply bilinear interpolation
+  to approximate positions everywhere else.
 
 
 ## Quick Start
