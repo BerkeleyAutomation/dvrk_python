@@ -18,6 +18,8 @@ from os.path import join
 import baselines.common.tf_util as U
 from baselines.imit.models import Actor
 import load_config as cfg
+#Adi: Importing capture_image.py
+import capture_image as cap
 import datetime
 
 
