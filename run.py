@@ -22,37 +22,53 @@ def run(args, cam, p):
     """
     stats = defaultdict(list)
 
-    # TODO Step 1: query the image from the camera class using `cam`.
+    for i in range(10):
+        # TODO Step 1: query the image from the camera class using `cam`.
+        c_img = None
+        while c_img is None:
+            c_img = cam.read_color_data()
+        c_img[np.isnan(c_img)] = 0
 
-    # TODO Step 2: process it and save as a 100x100 png image using
-    # `camera.process_img_for_net()` ideally.
 
-    # TODO Step 3: get the output from the neural network loading class (you did
-    # run it in a separate terminal tab, right?) and then show it to the human.
+        # TODO Step 2: process it and save as a 100x100 png image using
+        # `camera.process_img_for_net()` ideally.
+        c_img = camera.process_img_net(c_img) #Crop the image and resize to 100x100
+        head = config.DVRK_IMG_PATH
+        tail = "c_img_{}.png".format(str(i).zfill(2))
+        img_path = join(head,tail)
+        cv2.imwrite(img_path, c_img)
+        print('  just saved: {}'.format(img_path))
+        time.sleep(5)
 
-    action = None #TODO
+        # TODO Step 3: get the output from the neural network loading class (you did
+        # run it in a separate terminal tab, right?) and then show it to the human.
 
-    # TODO Step 4. If the output would result in a dangerous position, human
-    # terminates by hitting ESC key. Otherwise, press any other key to continue.
+        dvrk_action_paths = sorted([join(config.DVRK_IMG_PATH,x) for x in os.listdir(config.DVRK_IMG_PATH) if x[-4:]=='.txt'])
+        action = np.loadtxt(dvrk_action_paths[-1]) #TODO
 
-    # TODO Step 5: Watch the robot do its action. Terminate the script if the
-    # resulting action makes things fail spectacularly.
+        # TODO Step 4. If the output would result in a dangerous position, human
+        # terminates by hitting ESC key. Otherwise, press any other key to continue.
+        #Adi: I say we just put a debugger here because we can't map action to pixels just yet
+        import ipdb; ipdb.set_trace()
 
-    # Do something like:
-    #x  = action[0]
-    #y  = action[1]
-    #dx = action[2]
-    #dy = action[3]
-    #U.move_p_from_net_output(x, y, dx, dy,
-    #                         row_board=C.ROW_BOARD,
-    #                         col_board=C.COL_BOARD,
-    #                         data_square=data_square,
-    #                         p=p)
+        # TODO Step 5: Watch the robot do its action. Terminate the script if the
+        # resulting action makes things fail spectacularly.
 
-    # TODO Step 6. Record statistics and book-keeping.
-    stats['actions'].append(action)
+        # Do something like:
+        #x  = action[0]
+        #y  = action[1]
+        #dx = action[2]
+        #dy = action[3]
+        #U.move_p_from_net_output(x, y, dx, dy,
+        #                         row_board=C.ROW_BOARD,
+        #                         col_board=C.COL_BOARD,
+        #                         data_square=data_square,
+        #                         p=p)
 
-    # TODO: repeat the steps above, unless we decide the episode should terminate.
+        # TODO Step 6. Record statistics and book-keeping.
+        stats['actions'].append(action)
+
+        # TODO: repeat the steps above, unless we decide the episode should terminate.
 
     # Final book-keeping and return statistics.
     print('All done with episode!')

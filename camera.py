@@ -111,6 +111,7 @@ def process_img_for_net(c_img):
     """
     # TODO add processing, blurring, etc.
     c_img = c_img[175:675, 50:550]
+    c_img = cv2.resize(c_img, (100, 100))
     return c_img
 
 
