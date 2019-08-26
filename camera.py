@@ -15,7 +15,7 @@ from os.path import join
 class RGBD(object):
 
     def __init__(self):
-        rospy.init_node("camera")
+        #rospy.init_node("camera")
         # rostopic list [-s for subscribers] [-p for publishers] [-v verbose]
         self.bridge = CvBridge()
         self.img_rgb_raw = None
