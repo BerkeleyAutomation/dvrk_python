@@ -2,6 +2,7 @@
 """
 import sys
 import numpy as np
+from os import path
 
 
 ESC_KEYS = [27, 1048603]
@@ -23,6 +24,42 @@ def call_wait_key(nothing=None):
         print("Pressed ESC key. Terminating program...")
         sys.exit()
 
+def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
+    """
+
+    :param row_board: number of rows.
+    :param column_board: number of columns.
+    :param file_name: name of the calibration file
+    :param cloth_height: height offset
+    :return: data from calibration
+    """
+    if path.exists(file_name):
+        # import data from file
+        data_default = np.loadtxt(file_name, delimiter=',')
+    else:
+        # if file does not exist, set default
+        data_default = np.zeros((row_board * column_board, 5))
+
+    cnt = 0
+    for i in range(row_board):
+        for j in range(column_board):
+            data_default[cnt, 0] = -1 + j * 0.4
+            data_default[cnt, 1] = -1 + i * 0.4
+            data_default[cnt, 4] = data_default[cnt, 4] + cloth_height
+            cnt += 1
+    data = data_default
+
+    data_square = np.zeros((row_board + 1, column_board + 1, 5))
+    for i in range(row_board):
+        for j in range(column_board):
+            data_square[i, j, :] = data[column_board * j + i, 0:5]
+
+    for i in range(row_board):
+        data_square[i, column_board, :] = data_square[i, column_board - 1, :]
+    for j in range(column_board):
+        data_square[row_board, j] = data_square[row_board - 1, j]
+
+    return data_square
 
 def transform_CB2PSM(x, y, row_board, col_board, data_square):
     """Minho's code, for calibation, figure out the PSM coordinates.
