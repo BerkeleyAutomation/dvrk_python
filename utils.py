@@ -24,7 +24,7 @@ def call_wait_key(nothing=None):
         print("Pressed ESC key. Terminating program...")
         sys.exit()
 
-def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
+def load_mapping_table(row_board, column_board, file_name, cloth_height=0.0):
     """
 
     :param row_board: number of rows.
@@ -48,6 +48,7 @@ def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
             data_default[cnt, 4] = data_default[cnt, 4] + cloth_height
             cnt += 1
     data = data_default
+    print data
 
     data_square = np.zeros((row_board + 1, column_board + 1, 5))
     for i in range(row_board):
@@ -72,10 +73,10 @@ def transform_CB2PSM(x, y, row_board, col_board, data_square):
     :param col_board: number of columns.
     :param data_square: data from calibration.
     """
-    if x>1: x==1.0
-    if x<-1: x==-1.0
-    if y>1:  y==1.0
-    if y<-1: y==-1.0
+    if x>1: x=1.0
+    if x<-1: x=-1.0
+    if y>1:  y=1.0
+    if y<-1: y=-1.0
 
     for i in range(row_board):
         for j in range(col_board):
