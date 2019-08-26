@@ -27,7 +27,7 @@ class dvrkClothSim(threading.Thread):
         self.pos_pick = [0.0, 0.0]        #   xy coordinate for the cloth pick-up
         self.rot_pick = [0.0, 0.0, 0.0]   #   ZYX Euler angle in (rad)
         # self.pick_depth = -0.12
-        self.pickup_height = -0.123
+        self.pickup_height = -0.115
         self.jaw_opening = 50*3.141592/180.0
         self.jaw_closing = -5*3.141592/180.0
 
