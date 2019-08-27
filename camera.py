@@ -78,15 +78,23 @@ class RGBD(object):
         return self._info
 
 
-def depth_to_3ch(d_img, cutoff):
+def depth_to_3ch(d_img, cutoff_min, cutoff_max):
     """Process depth images the same as in the ISRR 2019 paper.
 
     Only applies if we're using depth images.
+    EDIT: actually we're going to add a min cutoff!
     """
     w,h = d_img.shape
     n_img = np.zeros([w, h, 3])
     d_img = d_img.flatten()
-    d_img[d_img>cutoff] = 0.0
+
+    # Instead of this:
+    #d_img[d_img>cutoff] = 0.0
+
+    # Do this?
+    d_img[ d_img>cutoff_max ] = cutoff_max
+    d_img[ d_img<cutoff_min ] = cutoff_min
+
     d_img = d_img.reshape([w,h])
     for i in range(3):
         n_img[:, :, i] = d_img
@@ -97,15 +105,22 @@ def depth_3ch_to_255(d_img):
     """Process depth images the same as in the ISRR 2019 paper.
 
     Only applies if we're using depth images.
+    EDIT: actually we're going to add a min cutoff!
     """
-    d_img = 255.0/np.max(d_img)*d_img
+    # Instead of this:
+    #d_img = 255.0/np.max(d_img)*d_img
+
+    # Do this:
+    d_img = d_img * (255.0 / (np.max(d_img)-np.min(d_img)) )  # pixels within a 255-interval
+    d_img = d_img - np.min(d_img)                             # pixels actually in [0,255]
+
     d_img = np.array(d_img, dtype=np.uint8)
     for i in range(3):
         d_img[:, :, i] = cv2.equalizeHist(d_img[:, :, i])
     return d_img    
 
 
-def process_img_for_net(c_img):
+def process_img_for_net(img):
     """Do any sort of processing of the image for the neural network.
 
     For example, we definitely need to crop, and we may want to do some
@@ -118,13 +133,22 @@ def process_img_for_net(c_img):
     cropping results in very blurry images (the filters cover a wider range).
     """
     # TODO add processing, blurring, etc.
-    c_img = c_img[175:675, 50:550]
-    c_img = cv2.resize(c_img, (100, 100))
-    return c_img
+    # Older way
+    #img = img[175:675, 50:550]
+
+    # First component 'height', second component 'width'.  Decrease 'height'
+    # values to get images higher up, decrease 'width' to make it move left.
+    img = img[140:640, 585:1085]
+
+    img = cv2.resize(img, (100, 100))
+    return img
 
 
 if __name__=='__main__':
-    CUTOFF = 1000 # eh just make it large ...
+    # Tune cutoff carefully, it's in meters.
+    CUTOFF_MIN = 0.760
+    CUTOFF_MAX = 0.890
+
     rgbd = RGBD(init_camera=True)
     i = 0
     nb_images = 1
@@ -175,8 +199,8 @@ if __name__=='__main__':
         # Let's process depth. Note that we do the cropped vs noncropped
         # separately, so the cropped one shouldn't have closer noisy values from
         # the dvrk arm affecting its calculations.
-        d_img      = depth_to_3ch(d_img, cutoff=CUTOFF)
-        d_img_crop = depth_to_3ch(d_img_crop, cutoff=CUTOFF)
+        d_img      = depth_to_3ch(d_img,      cutoff_min=CUTOFF_MIN, cutoff_max=CUTOFF_MAX)
+        d_img_crop = depth_to_3ch(d_img_crop, cutoff_min=CUTOFF_MIN, cutoff_max=CUTOFF_MAX)
         d_img      = depth_3ch_to_255(d_img)
         d_img_crop = depth_3ch_to_255(d_img_crop)
 
@@ -186,26 +210,35 @@ if __name__=='__main__':
         c_img_crop = process_img_for_net(c_img)
         assert c_img_crop.shape[0] == c_img_crop.shape[1], c_img.shape
 
-        c_tail      = "{}_c_img.png".format(str(num).zfill(2))
-        d_tail      = "{}_d_img.png".format(str(num).zfill(2))
-        c_tail_crop = "{}_c_img_crop.png".format(str(num).zfill(2))
-        d_tail_crop = "{}_d_img_crop.png".format(str(num).zfill(2))
+        # Try blurring depth, bilateral recommends 9 for offline applications
+        # that need heavy blurring. The two sigmas were 75 by default.
+        d_img_crop_blur = cv2.bilateralFilter(d_img_crop, 9, 100, 100)
+        #d_img_crop_blur = cv2.medianBlur(d_img_crop_blur, 5)
 
-        c_img_path      = join(head, c_tail)
-        d_img_path      = join(head, d_tail)
-        c_img_path_crop = join(head, c_tail_crop)
-        d_img_path_crop = join(head, d_tail_crop)
+        c_tail           = "{}_c_img.png".format(str(num).zfill(2))
+        d_tail           = "{}_d_img.png".format(str(num).zfill(2))
+        c_tail_crop      = "{}_c_img_crop.png".format(str(num).zfill(2))
+        d_tail_crop      = "{}_d_img_crop.png".format(str(num).zfill(2))
+        d_tail_crop_blur = "{}_d_img_crop_blur.png".format(str(num).zfill(2))
 
-        cv2.imwrite(c_img_path,      c_img)
-        cv2.imwrite(d_img_path,      d_img)
-        cv2.imwrite(c_img_path_crop, c_img_crop)
-        cv2.imwrite(d_img_path_crop, d_img_crop)
+        c_img_path           = join(head, c_tail)
+        d_img_path           = join(head, d_tail)
+        c_img_path_crop      = join(head, c_tail_crop)
+        d_img_path_crop      = join(head, d_tail_crop)
+        d_img_path_crop_blur = join(head, d_tail_crop_blur)
+
+        cv2.imwrite(c_img_path,           c_img)
+        cv2.imwrite(d_img_path,           d_img)
+        cv2.imwrite(c_img_path_crop,      c_img_crop)
+        cv2.imwrite(d_img_path_crop,      d_img_crop)
+        cv2.imwrite(d_img_path_crop_blur, d_img_crop_blur)
 
         print('  just saved: {}'.format(c_img_path))
         print('  just saved: {}'.format(d_img_path))
         print('  just saved: {}'.format(c_img_path_crop))
         print('  just saved: {}'.format(d_img_path_crop))
+        print('  just saved: {}'.format(d_img_path_crop_blur))
         i += 1
         time.sleep(2)
     
-    rospy.spin()
+    #rospy.spin()
