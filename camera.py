@@ -14,8 +14,16 @@ from os.path import join
 
 class RGBD(object):
 
-    def __init__(self):
-        #rospy.init_node("camera")
+    def __init__(self, init_camera=False):
+        """
+        Daniel: unfortunately if we leave rospy.init_node('camera') on, and we
+        are importing this class in other code, then we're going to run into
+        ROS problems. But we need this if we are calling RGBD as a stand alone
+        class, such as in the main method of this file at the bottom. I'd just
+        leave init_camera as False by default.
+        """
+        if init_camera:
+            rospy.init_node("camera")
         # rostopic list [-s for subscribers] [-p for publishers] [-v verbose]
         self.bridge = CvBridge()
         self.img_rgb_raw = None
@@ -116,34 +124,87 @@ def process_img_for_net(c_img):
 
 
 if __name__=='__main__':
-    rgbd = RGBD()
+    CUTOFF = 1000 # eh just make it large ...
+    rgbd = RGBD(init_camera=True)
     i = 0
+    nb_images = 1
+    head = "/home/davinci0/seita/dvrk_python/dir_for_imgs"
 
-    while i < 11:
+    while i < nb_images:
+        print(os.listdir(head))
+        num = len([x for x in os.listdir(head) if 'c_img_crop' in x])
+        print('current index is at: {}'.format(num))
+
         d_img = None
         c_img = None
     
+        print('querying the depth ...')
         while d_img is None:
             d_img = rgbd.read_depth_data()
+        print('querying the RGB ...')
         while c_img is None:
             c_img = rgbd.read_color_data()
-
+        
+        nb_items = np.prod(np.shape(d_img))
+        nb_not_nan = np.count_nonzero(~np.isnan(d_img))
+        print('depth image shape {}, has {} items'.format(d_img.shape, nb_items))
+        print('  num not nan: {}, or {:.2f}%'.format(nb_not_nan, nb_not_nan/float(nb_items)*100))
         d_img[np.isnan(d_img)] = 0
         c_img[np.isnan(c_img)] = 0
-    
-        d_img = depth_to_3ch(d_img, 1400)
-        d_img = depth_3ch_to_255(d_img)
 
-        # Images are 1200 x 1920.
+        # Check depth image. Also, we have to tune the cutoff.
+        # The depth is clearly in METERS, but I think it's hard to get an
+        # accurate cutoff, sadly.
+        print('\nAfter NaN filtering of the depth images ...')
+        print('  max: {:.3f}'.format(np.max(d_img)))
+        print('  min: {:.3f}'.format(np.min(d_img)))
+        print('  mean: {:.3f}'.format(np.mean(d_img)))
+        print('  medi: {:.3f}'.format(np.median(d_img)))
+        print('  std: {:.3f}'.format(np.std(d_img)))
+
+        # I think we need a version with and without the cropped for depth.
+        d_img_crop = process_img_for_net(d_img)
+        print('\nAfter NaN filtering of the depth images ... now for the CROPPED image:')
+        print('  max: {:.3f}'.format(np.max(d_img_crop)))
+        print('  min: {:.3f}'.format(np.min(d_img_crop)))
+        print('  mean: {:.3f}'.format(np.mean(d_img_crop)))
+        print('  medi: {:.3f}'.format(np.median(d_img_crop)))
+        print('  std: {:.3f}'.format(np.std(d_img_crop)))
+        print('')
+
+        # Let's process depth. Note that we do the cropped vs noncropped
+        # separately, so the cropped one shouldn't have closer noisy values from
+        # the dvrk arm affecting its calculations.
+        d_img      = depth_to_3ch(d_img, cutoff=CUTOFF)
+        d_img_crop = depth_to_3ch(d_img_crop, cutoff=CUTOFF)
+        d_img      = depth_3ch_to_255(d_img)
+        d_img_crop = depth_3ch_to_255(d_img_crop)
+
+        # Images are 1200 x 1920, with 3 channels (well, we force for depth).
+        assert d_img.shape == (1200, 1920, 3), d_img.shape
         assert c_img.shape == (1200, 1920, 3), c_img.shape
-        c_img = process_img_for_net(c_img)
-        assert c_img.shape[0] == c_img.shape[1], c_img.shape
+        c_img_crop = process_img_for_net(c_img)
+        assert c_img_crop.shape[0] == c_img_crop.shape[1], c_img.shape
 
-        head = "/home/davinci0/adi/dvrk_python/dvrk_img"
-        tail = "c_img_{}.png".format(str(i).zfill(2))
-        img_path = join(head,tail)
-        cv2.imwrite(img_path, c_img)
-        print('  just saved: {}'.format(img_path))
+        c_tail      = "{}_c_img.png".format(str(num).zfill(2))
+        d_tail      = "{}_d_img.png".format(str(num).zfill(2))
+        c_tail_crop = "{}_c_img_crop.png".format(str(num).zfill(2))
+        d_tail_crop = "{}_d_img_crop.png".format(str(num).zfill(2))
+
+        c_img_path      = join(head, c_tail)
+        d_img_path      = join(head, d_tail)
+        c_img_path_crop = join(head, c_tail_crop)
+        d_img_path_crop = join(head, d_tail_crop)
+
+        cv2.imwrite(c_img_path,      c_img)
+        cv2.imwrite(d_img_path,      d_img)
+        cv2.imwrite(c_img_path_crop, c_img_crop)
+        cv2.imwrite(d_img_path_crop, d_img_crop)
+
+        print('  just saved: {}'.format(c_img_path))
+        print('  just saved: {}'.format(d_img_path))
+        print('  just saved: {}'.format(c_img_path_crop))
+        print('  just saved: {}'.format(d_img_path_crop))
         i += 1
         time.sleep(2)
     
