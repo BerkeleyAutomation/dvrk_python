@@ -73,7 +73,7 @@ class dvrkArm(object):
         # create node
         if not rospy.get_node_uri():
             rospy.init_node('dvrkArm_node', anonymous = True, log_level = rospy.WARN)
-            self.interval_ms = 10
+            self.interval_ms = 20
             self.rate = rospy.Rate(1000.0 / self.interval_ms)
         else:
             rospy.logdebug(rospy.get_caller_id() + ' -> ROS already initialized')

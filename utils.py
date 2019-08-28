@@ -29,7 +29,7 @@ def call_wait_key(nothing=None):
         print("Pressed ESC key. Terminating program...")
         sys.exit()
 
-def load_mapping_table(row_board, column_board, file_name, cloth_height=0.0):
+def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
     """
 
     :param row_board: number of rows.
