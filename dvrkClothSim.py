@@ -99,8 +99,8 @@ class dvrkClothSim(threading.Thread):
 if __name__ == "__main__":
     p = dvrkClothSim()
     p.set_position_origin([0.003, 0.001, -0.06], 0, 'deg')
-    print(p.arm.get_current_pose())
-    print(p.arm.get_current_pose('deg'))
+    # print(p.arm.get_current_pose())
+    # print(p.arm.get_current_pose('deg'))
 
     #while True:
     #    p.move_pose_pickup([-0.081,0.028,-0.144], [-0.037, 0.018], 0, 'deg')

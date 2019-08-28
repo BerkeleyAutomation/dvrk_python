@@ -20,6 +20,8 @@ class dvrkArm(object):
         self.__ros_namespace = ros_namespace
         self.__goal_reached = False
         self.__goal_reached_event = threading.Event()
+        self.__get_position = False
+        self.__get_position_event = threading.Event()
 
         # continuous publish from dvrk_bridge
         self.__position_cartesian_current = PyKDL.Frame()
@@ -69,6 +71,8 @@ class dvrkArm(object):
         # create node
         if not rospy.get_node_uri():
             rospy.init_node('dvrkArm_node', anonymous = True, log_level = rospy.WARN)
+            self.interval_ms = 10
+            self.rate = rospy.Rate(1000.0 / self.interval_ms)
         else:
             rospy.logdebug(rospy.get_caller_id() + ' -> ROS already initialized')
 
@@ -85,6 +89,8 @@ class dvrkArm(object):
         """Callback for the current cartesian position.
         """
         self.__position_cartesian_current = posemath.fromMsg(data.pose)
+        self.__get_position = True
+        self.__get_position_event.set()
 
     def __position_joint_current_cb(self, data):
         """Callback for the current joint position.
@@ -117,6 +123,27 @@ class dvrkArm(object):
         if unit == 'deg':
             rot = U.rad_to_deg(rot)
         return pos,rot
+
+    def get_current_pose_and_wait(self, unit='rad'):    # Unit: pos in (m) rot in (rad) or (deg)
+        """
+
+        :param unit: 'rad' or 'deg'
+        :return: Numpy.array
+        """
+        self.__get_position_event.clear()
+
+        # the position is originally not received
+        self.__get_position = False
+        # recursively call this function until the position is received
+        self.__get_position_event.wait(20)  # 1 minute at most
+
+        if self.__get_position:
+            pos, rot = self.PyKDLFrame_to_NumpyArray(self.__position_cartesian_current)
+            if unit == 'deg':
+                rot = U.rad_to_deg(rot)
+            return pos, rot
+        else:
+            return [], []
 
     def get_current_joint(self, unit='rad'):
         """
@@ -152,6 +179,23 @@ class dvrkArm(object):
         msg = posemath.toMsg(frame)
         return self.__set_position_goal_cartesian_publish_and_wait(msg)
 
+    def set_pose_quaternion(self, pos, rot, wait_callback=True):
+        """
+
+        :param pos: position array [x,y,z]
+        :param rot: orientation array in quaternion [x,y,z,w]
+        :param wait_callback: True or False
+        """
+        # set in position cartesian mode
+        frame = self.NumpyArraytoPyKDLFrame_quaternion(pos, rot)
+        msg = posemath.toMsg(frame)
+        # go to that position by goal
+        if wait_callback:
+            return self.__set_position_goal_cartesian_publish_and_wait(msg)
+        else:
+            self.__set_position_goal_cartesian_pub.publish(msg)
+            return True
+
     def set_pose(self, pos, rot, unit='rad', wait_callback=True):
         """
 
@@ -171,6 +215,27 @@ class dvrkArm(object):
         else:
             self.__set_position_goal_cartesian_pub.publish(msg)
             return True
+
+    # specify intermediate points between q0 & qf using linear interpolation (blocked until goal reached)
+    def set_pose_linear(self, pos, rot, unit='rad'):
+
+        [q0,trash] = self.get_current_pose_and_wait()
+        qf = pos
+        if np.allclose(q0,qf):
+            return False
+        else:
+            tf = np.linalg.norm(np.array(qf)-np.array(q0)) * 13
+            v_limit = (np.array(qf)-np.array(q0))/tf
+            v = v_limit * 1.8
+            t = 0.0
+            while True:
+                q = self.LSPB(q0, qf, t, tf, v)
+                print q
+                self.set_pose(q, rot, unit, False)
+                t += 0.001 * self.interval_ms
+                self.rate.sleep()
+                if t > tf:
+                    break
 
     def __set_position_goal_cartesian_publish_and_wait(self, msg):
         """
@@ -268,16 +333,53 @@ class dvrkArm(object):
         rz, ry, rx = np.array([np.pi / 2, 0, -np.pi]) - np.array(rot)
         return PyKDL.Frame(PyKDL.Rotation.EulerZYX(rz, ry, rx), PyKDL.Vector(px, py, pz))
 
+    def NumpyArraytoPyKDLFrame_quaternion(self,pos,rot):
+        px, py, pz = pos
+        rx, ry, rz, rw = rot
+        return PyKDL.Frame(PyKDL.Rotation.Quaternion(rx, ry, rz, rw), PyKDL.Vector(px, py, pz))
+
+    """
+    Trajectory
+    """
+    def LSPB(self, q0, qf, t, tf, v):
+
+        if np.allclose(q0,qf):    return q0
+        elif np.all(v)==0:    return q0
+        elif tf==0:     return q0
+        elif tf<0:     return []
+        elif t<0:      return []
+        else:
+            v_limit = (np.array(qf) - np.array(q0)) / tf
+            if np.allclose(U.normalize(v),U.normalize(v_limit)):
+                if np.linalg.norm(v) < np.linalg.norm(v_limit) or np.linalg.norm(2*v_limit) < np.linalg.norm(v):
+                    return []
+                else:
+                    tb = np.linalg.norm(np.array(q0)-np.array(qf)+np.array(v)*tf) / np.linalg.norm(v)
+                    a = np.array(v)/tb
+                    if 0 <= t and t < tb:
+                        q = np.array(q0) + np.array(a)/2*t*t
+                    elif tb < t and t <= tf - tb:
+                        q = (np.array(qf)+np.array(q0)-np.array(v)*tf)/2 + np.array(v)*t
+                    elif tf - tb < t and t <= tf:
+                        q = np.array(qf)-np.array(a)*tf*tf/2 + np.array(a)*tf*t - np.array(a)/2*t*t
+                    else:
+                        return []
+                    return q
+            else:
+                return []
+
 if __name__ == "__main__":
     p = dvrkArm('/PSM1')
-    # pos_des = [0.0, 0.0, -0.15]  # Position (m)
-    # rot_des = [0, 0, 0]  # Euler angle ZYX (or roll-pitch-yaw)
+    # pos_des = [0.1, 0.10, -0.1]  # Position (m)
+    pos_des = [0.0, 0.0, -0.14]  # Position (m)
+    rot_des = [0, 0, 0]  # Euler angle ZYX (or roll-pitch-yaw)
     # jaw_des = [0]
     # p.set_pose(pos_des, rot_des, 'deg')
-    joint = [0, 0, 0.15, 0, 0, 0]
+    # joint = [0, 0, 0.15, 0, 0, 0]
     # ps.set_joint(joint)
-    jaw = 0
-    p.set_jaw(jaw, 'deg')
+    # jaw = 0
+    # p.set_jaw(jaw, 'deg')
+    p.set_pose_linear(pos_des,rot_des)
     # print p.get_current_pose_frame()
     # print p.get_current_pose('deg')
     # print p.get_current_joint('deg')

@@ -13,7 +13,6 @@ import utils as U
 import time
 
 if __name__ == "__main__":
-
     row_board = 6
     column_board = 6
     cloth_height = 0.0    # unit = (m)
