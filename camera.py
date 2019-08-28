@@ -83,6 +83,7 @@ def depth_to_3ch(d_img, cutoff_min, cutoff_max):
 
     Only applies if we're using depth images.
     EDIT: actually we're going to add a min cutoff!
+    UPDATE: also I think we should do inpainting?
     """
     w,h = d_img.shape
     n_img = np.zeros([w, h, 3])
@@ -92,7 +93,7 @@ def depth_to_3ch(d_img, cutoff_min, cutoff_max):
     #d_img[d_img>cutoff] = 0.0
 
     # Do this?
-    d_img[ d_img>cutoff_max ] = cutoff_max
+    d_img[ d_img>cutoff_max ] = 0.0 #cutoff_max
     d_img[ d_img<cutoff_min ] = cutoff_min
 
     d_img = d_img.reshape([w,h])
@@ -113,6 +114,8 @@ def depth_3ch_to_255(d_img):
     # Do this:
     d_img = d_img * (255.0 / (np.max(d_img)-np.min(d_img)) )  # pixels within a 255-interval
     d_img = d_img - np.min(d_img)                             # pixels actually in [0,255]
+
+    # Now do the inpainting?
 
     d_img = np.array(d_img, dtype=np.uint8)
     for i in range(3):
@@ -146,8 +149,9 @@ def process_img_for_net(img):
 
 if __name__=='__main__':
     # Tune cutoff carefully, it's in meters.
-    CUTOFF_MIN = 0.760
-    CUTOFF_MAX = 0.890
+    CUTOFF_MIN = 0.800
+    CUTOFF_MAX = 0.910
+    IN_PAINT = True
 
     rgbd = RGBD(init_camera=True)
     i = 0
@@ -169,12 +173,33 @@ if __name__=='__main__':
         while c_img is None:
             c_img = rgbd.read_color_data()
         
+        # Check for NaNs.
+        nb_items = np.prod(np.shape(c_img))
+        nb_not_nan = np.count_nonzero(~np.isnan(c_img))
+        print('RGB image shape {}, has {} items'.format(c_img.shape, nb_items))
+        print('  num NOT nan: {}, or {:.2f}%'.format(nb_not_nan, nb_not_nan/float(nb_items)*100))
         nb_items = np.prod(np.shape(d_img))
         nb_not_nan = np.count_nonzero(~np.isnan(d_img))
         print('depth image shape {}, has {} items'.format(d_img.shape, nb_items))
-        print('  num not nan: {}, or {:.2f}%'.format(nb_not_nan, nb_not_nan/float(nb_items)*100))
-        d_img[np.isnan(d_img)] = 0
+        print('  num NOT nan: {}, or {:.2f}%'.format(nb_not_nan, nb_not_nan/float(nb_items)*100))
+
+        # We fill in NaNs with zeros.
         c_img[np.isnan(c_img)] = 0
+        d_img[np.isnan(d_img)] = 0
+
+        # BUT we can call `inpaint` which will fill in the zero pixels!
+        # Actually only for the depth ... right? And I think this should be
+        # after we get an image scaled into [0,255], right? I don't see GQCNN
+        # doing that, though, they just do inpainting right after the depth
+        # image is created, but IDK if they do other processing before loading
+        # that depth image. And doign it later will result in some problems...
+        if IN_PAINT:
+            # Only call here to avoid making this a dependency.
+            from perception import (ColorImage, DepthImage)
+            print('now in-painting the depth image ...')
+            d_img = DepthImage(d_img)
+            d_img = d_img.inpaint() # inpaint, I think it's OK right after?
+            d_img = d_img.data # get raw data back
 
         # Check depth image. Also, we have to tune the cutoff.
         # The depth is clearly in METERS, but I think it's hard to get an
@@ -239,6 +264,5 @@ if __name__=='__main__':
         print('  just saved: {}'.format(d_img_path_crop))
         print('  just saved: {}'.format(d_img_path_crop_blur))
         i += 1
-        time.sleep(2)
     
     #rospy.spin()
