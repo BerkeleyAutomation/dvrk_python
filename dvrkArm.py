@@ -22,6 +22,8 @@ class dvrkArm(object):
         self.__goal_reached_event = threading.Event()
         self.__get_position = False
         self.__get_position_event = threading.Event()
+        self.__get_jaw = False
+        self.__get_jaw_event = threading.Event()
 
         # continuous publish from dvrk_bridge
         self.__position_cartesian_current = PyKDL.Frame()
@@ -102,6 +104,8 @@ class dvrkArm(object):
         """Callback for the current jaw position.
         """
         self.__position_jaw_current = data.position
+        self.__get_jaw = True
+        self.__get_jaw_event.set()
 
     """
     Get States function
@@ -157,7 +161,7 @@ class dvrkArm(object):
             joint[2] = self.__position_joint_current[2]
         return joint
 
-    def get_current_jaw(self,unit):
+    def get_current_jaw(self,unit='rad'):
         """
 
         :param unit: 'rad' or 'deg'
@@ -167,6 +171,27 @@ class dvrkArm(object):
         if unit == "deg":
             jaw = U.rad_to_deg(self.__position_jaw_current)
         return jaw
+
+    def get_current_jaw_and_wait(self, unit='rad'):    # Unit: pos in (m) rot in (rad) or (deg)
+        """
+
+        :param unit: 'rad' or 'deg'
+        :return: Numpy.array
+        """
+        self.__get_jaw_event.clear()
+
+        # the position is originally not received
+        self.__get_jaw = False
+        # recursively call this function until the position is received
+        self.__get_jaw_event.wait(20)  # 1 minute at most
+
+        if self.__get_jaw:
+            jaw = np.float64(self.__position_jaw_current)
+            if unit == "deg":
+                jaw = U.rad_to_deg(self.__position_jaw_current)
+            return jaw
+        else:
+            return []
 
     """
     Set States function
@@ -216,6 +241,22 @@ class dvrkArm(object):
             self.__set_position_goal_cartesian_pub.publish(msg)
             return True
 
+    def set_pose_direct(self, pos, rot, unit='rad'):
+        """
+
+        :param pos_des: position array [x,y,z]
+        :param rot_des: rotation array [Z,Y,X euler angle]
+        :param unit: 'rad' or 'deg'
+        """
+        if unit == 'deg':
+            rot = U.deg_to_rad(rot)
+
+        # set in position cartesian mode
+        frame = self.NumpyArraytoPyKDLFrame(pos, rot)
+        msg = posemath.toMsg(frame)
+        # go to that position by goal
+        self.__set_position_cartesian_pub.publish(msg)
+
     # specify intermediate points between q0 & qf using linear interpolation (blocked until goal reached)
     def set_pose_linear(self, pos, rot, unit='rad'):
 
@@ -224,14 +265,21 @@ class dvrkArm(object):
         if np.allclose(q0,qf):
             return False
         else:
-            tf = np.linalg.norm(np.array(qf)-np.array(q0)) * 13
+            tf = np.linalg.norm(np.array(qf)-np.array(q0))**0.8 * 10
             v_limit = (np.array(qf)-np.array(q0))/tf
-            v = v_limit * 1.8
+            v = v_limit * 1.5
+            print '\n'
+            print 'q0=', q0
+            print 'qf=', qf
+            print 'norm=', np.linalg.norm(np.array(qf) - np.array(q0))
+            print 'tf=', tf
+            print 'v=',v
             t = 0.0
             while True:
                 q = self.LSPB(q0, qf, t, tf, v)
                 print q
                 self.set_pose(q, rot, unit, False)
+                # self.set_pose_direct(q, rot, unit)
                 t += 0.001 * self.interval_ms
                 self.rate.sleep()
                 if t > tf:
@@ -302,6 +350,40 @@ class dvrkArm(object):
         else:
             self.__set_position_goal_jaw_pub.publish(msg)
             return True
+
+    def set_jaw_direct(self, jaw, unit='rad'):
+        """
+
+        :param jaw: jaw angle
+        :param unit: 'rad' or 'deg'
+        """
+        if unit == 'deg':
+            jaw = U.deg_to_rad(jaw)
+        msg = JointState()
+        msg.position = [jaw]
+        self.__set_position_jaw_pub.publish(msg)
+
+    # specify intermediate points between q0 & qf using linear interpolation (blocked until goal reached)
+    def set_jaw_linear(self, jaw, unit='rad'):
+
+        q0 = self.get_current_jaw_and_wait()
+        qf = jaw
+        if np.allclose(q0,qf):
+            return False
+        else:
+            tf = np.linalg.norm(np.array(qf)-np.array(q0))**0.8 * 0.6
+            v_limit = (np.array(qf)-np.array(q0))/tf
+            v = v_limit * 1.5
+            t = 0.0
+            while True:
+                q = self.LSPB(q0, qf, t, tf, v)
+                print q
+                # self.set_pose(q, rot, unit, False)
+                self.set_jaw_direct(q, unit)
+                t += 0.001 * self.interval_ms
+                self.rate.sleep()
+                if t > tf:
+                    break
 
     def __set_position_goal_jaw_publish_and_wait(self,msg):
         """
