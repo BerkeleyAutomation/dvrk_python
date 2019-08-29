@@ -93,7 +93,8 @@ def depth_to_3ch(d_img, cutoff_min, cutoff_max):
     #d_img[d_img>cutoff] = 0.0
 
     # Do this?
-    d_img[ d_img>cutoff_max ] = 0.0 #cutoff_max
+    #d_img[ d_img>cutoff_max ] = 0.0
+    d_img[ d_img>cutoff_max ] = cutoff_max
     d_img[ d_img<cutoff_min ] = cutoff_min
 
     d_img = d_img.reshape([w,h])
@@ -150,8 +151,8 @@ def process_img_for_net(img):
 if __name__=='__main__':
     # Tune cutoff carefully, it's in meters.
     CUTOFF_MIN = 0.800
-    #CUTOFF_MAX = 0.910  # 0.910 will black out the background
-    CUTOFF_MAX = 1.000   # 1.000 will make background look slightly brighter
+    CUTOFF_MAX = 0.905  # 0.910 will black out background plane, or make it white if we want :-)
+    #CUTOFF_MAX = 1.000   # 1.000 will make background look slightly brighter
     IN_PAINT = True
 
     rgbd = RGBD(init_camera=True)
