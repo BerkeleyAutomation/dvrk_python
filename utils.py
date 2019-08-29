@@ -15,6 +15,11 @@ def rad_to_deg(rad):
 def deg_to_rad(deg):
     return np.array(deg) *np.pi/180.
 
+def normalize(v):
+    norm=np.linalg.norm(v, ord=2)
+    if norm==0:
+        norm=np.finfo(v.dtype).eps
+    return v/norm
 
 def call_wait_key(nothing=None):
     """Call this like: `utils.call_wait_key( cv2.imshow(...) )`.
@@ -24,7 +29,7 @@ def call_wait_key(nothing=None):
         print("Pressed ESC key. Terminating program...")
         sys.exit()
 
-def load_mapping_table(row_board, column_board, file_name, cloth_height=0.0):
+def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
     """
 
     :param row_board: number of rows.
@@ -48,7 +53,7 @@ def load_mapping_table(row_board, column_board, file_name, cloth_height=0.0):
             data_default[cnt, 4] = data_default[cnt, 4] + cloth_height
             cnt += 1
     data = data_default
-    print data
+    # print data
 
     data_square = np.zeros((row_board + 1, column_board + 1, 5))
     for i in range(row_board):
@@ -134,9 +139,9 @@ def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p):
                                         col_board,
                                         data_square)
     release_pos = np.array([release_pos_temp[0], release_pos_temp[1]])
-    print pickup_pos, release_pos
+    # print pickup_pos, release_pos
     # just checking if the ROS input is fine
-    user_input = raw_input("Are you sure the values to input to the robot arm?(y or n)")
-    if user_input == "y":
-        p.move_pose_pickup(pickup_pos, release_pos, 0, 'rad')
+    # user_input = raw_input("Are you sure the values to input to the robot arm?(y or n)")
+    # if user_input == "y":
+    p.move_pose_pickup(pickup_pos, release_pos, 0, 'rad')
 

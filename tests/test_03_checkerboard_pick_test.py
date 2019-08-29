@@ -13,7 +13,6 @@ import utils as U
 import time
 
 if __name__ == "__main__":
-
     row_board = 6
     column_board = 6
     cloth_height = 0.0    # unit = (m)
@@ -22,9 +21,10 @@ if __name__ == "__main__":
     p.set_position_origin([0.003, 0.001, -0.06], 0, 'deg')
     for i in range(row_board):
         for j in range(column_board):
-            x = -1.0
-            y = -1.0
-            dx = -0.4
-            dy = - 0.3
+            x = -1 + j * 0.4
+            y = -1 + i * 0.4
+            dx = 0.0
+            dy = 0.0
+            print x,y
             U.move_p_from_net_output(x, y, dx, dy, row_board, column_board, data_square, p)
             time.sleep(1)

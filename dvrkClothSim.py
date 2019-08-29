@@ -52,27 +52,27 @@ class dvrkClothSim(threading.Thread):
             rot_pick = rot_pick*3.141591/180.0
 
         # move to the origin
-        self.arm.set_pose(self.pos_org, self.rot_org, 'rad')
+        self.arm.set_pose_linear(self.pos_org, self.rot_org, 'rad')
 
         # move upon the pick-up spot and open the jaw
         p_temp = np.array([pos_pick[0], pos_pick[1], self.pickup_height])
         r_temp = np.array([rot_pick, 0.0, 0.0])
-        self.arm.set_pose(p_temp, r_temp, 'rad')
-        self.arm.set_jaw(self.jaw_opening)
+        self.arm.set_pose_linear(p_temp, r_temp, 'rad')
+        self.arm.set_jaw(self.jaw_opening, False)
 
         # move downward and grasp the cloth
         pos_downward = np.array([pos_pick[0], pos_pick[1], pos_pick[2]])
-        self.arm.set_pose(pos_downward, r_temp, 'rad')
-        self.arm.set_jaw(self.jaw_closing)
+        self.arm.set_pose_linear(pos_downward, r_temp, 'rad')
+        self.arm.set_jaw(self.jaw_closing, False)
 
         # move upward, move the cloth, and drop the cloth
-        self.arm.set_pose(p_temp, r_temp, 'rad')
+        self.arm.set_pose_linear(p_temp, r_temp, 'rad')
         p_temp2 = np.array([pos_drop[0], pos_drop[1], self.pickup_height])
-        self.arm.set_pose(p_temp2, r_temp, 'rad')
-        self.arm.set_jaw(self.jaw_opening)
+        self.arm.set_pose_linear(p_temp2, r_temp, 'rad')
+        self.arm.set_jaw(self.jaw_opening, False)
 
         # move to the origin and close the jaw
-        self.arm.set_pose(self.pos_org, self.rot_org, 'rad')
+        self.arm.set_pose_linear(self.pos_org, self.rot_org, 'rad')
 
     def start(self):
         self.stop_flag = False
@@ -99,8 +99,8 @@ class dvrkClothSim(threading.Thread):
 if __name__ == "__main__":
     p = dvrkClothSim()
     p.set_position_origin([0.003, 0.001, -0.06], 0, 'deg')
-    print(p.arm.get_current_pose())
-    print(p.arm.get_current_pose('deg'))
+    # print(p.arm.get_current_pose())
+    # print(p.arm.get_current_pose('deg'))
 
     #while True:
     #    p.move_pose_pickup([-0.081,0.028,-0.144], [-0.037, 0.018], 0, 'deg')
