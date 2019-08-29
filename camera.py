@@ -150,7 +150,8 @@ def process_img_for_net(img):
 if __name__=='__main__':
     # Tune cutoff carefully, it's in meters.
     CUTOFF_MIN = 0.800
-    CUTOFF_MAX = 0.910
+    #CUTOFF_MAX = 0.910  # 0.910 will black out the background
+    CUTOFF_MAX = 1.000   # 1.000 will make background look slightly brighter
     IN_PAINT = True
 
     rgbd = RGBD(init_camera=True)
