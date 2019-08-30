@@ -139,7 +139,7 @@ def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p):
                                         col_board,
                                         data_square)
     release_pos = np.array([release_pos_temp[0], release_pos_temp[1]])
-    # print pickup_pos, release_pos
+    print pickup_pos, release_pos
     # just checking if the ROS input is fine
     # user_input = raw_input("Are you sure the values to input to the robot arm?(y or n)")
     # if user_input == "y":

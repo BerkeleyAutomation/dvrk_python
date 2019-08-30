@@ -268,16 +268,16 @@ class dvrkArm(object):
             tf = np.linalg.norm(np.array(qf)-np.array(q0))**0.8 * 10
             v_limit = (np.array(qf)-np.array(q0))/tf
             v = v_limit * 1.5
-            print '\n'
-            print 'q0=', q0
-            print 'qf=', qf
-            print 'norm=', np.linalg.norm(np.array(qf) - np.array(q0))
-            print 'tf=', tf
-            print 'v=',v
+            # print '\n'
+            # print 'q0=', q0
+            # print 'qf=', qf
+            # print 'norm=', np.linalg.norm(np.array(qf) - np.array(q0))
+            # print 'tf=', tf
+            # print 'v=',v
             t = 0.0
             while True:
                 q = self.LSPB(q0, qf, t, tf, v)
-                print q
+                # print q
                 self.set_pose(q, rot, unit, False)
                 # self.set_pose_direct(q, rot, unit)
                 t += 0.001 * self.interval_ms
@@ -377,7 +377,7 @@ class dvrkArm(object):
             t = 0.0
             while True:
                 q = self.LSPB(q0, qf, t, tf, v)
-                print q
+                # print q
                 # self.set_pose(q, rot, unit, False)
                 self.set_jaw_direct(q, unit)
                 t += 0.001 * self.interval_ms
@@ -451,7 +451,7 @@ class dvrkArm(object):
                 return []
 
 if __name__ == "__main__":
-    p = dvrkArm('/PSM1')
+    p = dvrkArm('/PSM2')
     # pos_des = [0.1, 0.10, -0.1]  # Position (m)
     pos_des = [0.0, 0.0, -0.14]  # Position (m)
     rot_des = [0, 0, 0]  # Euler angle ZYX (or roll-pitch-yaw)
@@ -459,9 +459,9 @@ if __name__ == "__main__":
     # p.set_pose(pos_des, rot_des, 'deg')
     # joint = [0, 0, 0.15, 0, 0, 0]
     # ps.set_joint(joint)
-    # jaw = 0
-    # p.set_jaw(jaw, 'deg')
-    p.set_pose_linear(pos_des,rot_des)
+    jaw = 0
+    p.set_jaw(jaw, 'deg')
+    # p.set_pose_linear(pos_des,rot_des)
     # print p.get_current_pose_frame()
     # print p.get_current_pose('deg')
     # print p.get_current_joint('deg')
