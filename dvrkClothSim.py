@@ -41,7 +41,8 @@ class dvrkClothSim(threading.Thread):
         self.pos_org = pos
 
     def move_pose_pickup(self, pos_pick, pos_drop, rot_pick, unit='rad'):
-        """
+        """The main arm motion we should be using.
+
         :param pos_pick: x,y coordinate to pick up (in background space)
         :param pos_drop: x,y coordinate to drop (in background spcae)
         :param rot_pick: roll angle of grasper to pick up

@@ -26,5 +26,6 @@ if __name__ == "__main__":
             dx = 0.0
             dy = 0.0
             print('\n({},{})'.format(x,y))
-            U.move_p_from_net_output(x, y, dx, dy, row_board, column_board, data_square, p)
+            U.move_p_from_net_output(x, y, dx, dy, row_board, column_board,
+                                     data_square, p, debug=True)
             time.sleep(1)

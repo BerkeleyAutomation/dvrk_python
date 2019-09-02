@@ -77,7 +77,7 @@ def run(args, cam, p):
 if __name__ == "__main__":
     # I would just set all to reasonable defaults, or put them in the config file.
     pp = argparse.ArgumentParser()
-    #parser.add_argument('--use_color', action='store_true')
+    parser.add_argument('--use_color', action='store_true')
     #pp.add_argument('--version', type=int, default=0)
     args = pp.parse_args()
 

@@ -15,27 +15,39 @@ def rad_to_deg(rad):
 def deg_to_rad(deg):
     return np.array(deg) *np.pi/180.
 
+
 def normalize(v):
     norm=np.linalg.norm(v, ord=2)
     if norm==0:
         norm=np.finfo(v.dtype).eps
     return v/norm
 
+
 def call_wait_key(nothing=None):
-    """Call this like: `utils.call_wait_key( cv2.imshow(...) )`.
-    """
+    """Call this like: `utils.call_wait_key( cv2.imshow(...) )`."""
     key = cv2.waitKey(0)
     if key in ESC_KEYS:
         print("Pressed ESC key. Terminating program...")
         sys.exit()
 
+
 def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
-    """
+    """Load the mapping table which we need to map from neural net to action.
+
+    The mapping table looks like this:
+
+        nx,ny,rx,ry,rz
+
+    Where `nx,ny` are coordinates w.r.t. the background plane, of which the
+    cloth lies on top. Numbers range from (-1,1) and should be discretized in
+    the mapping table. The `rx,ry,rz` are the x,y,z positions w.r.t. the robot's
+    frame, and were derived by moving the robot gripper to that position over a
+    checkerboard. Note that rotation is not included in the mapping table.
 
     :param row_board: number of rows.
     :param column_board: number of columns.
     :param file_name: name of the calibration file
-    :param cloth_height: height offset
+    :param cloth_height: height offset, we add to the z values from the data.
     :return: data from calibration
     """
     if path.exists(file_name):
@@ -53,8 +65,9 @@ def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
             data_default[cnt, 4] = data_default[cnt, 4] + cloth_height
             cnt += 1
     data = data_default
-    # print data
 
+    # Daniel: a bit confused about this, but it seems necessary to convert to
+    # PSM space. See `transform_CB2PSM`.
     data_square = np.zeros((row_board + 1, column_board + 1, 5))
     for i in range(row_board):
         for j in range(column_board):
@@ -67,12 +80,15 @@ def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
 
     return data_square
 
+
 def transform_CB2PSM(x, y, row_board, col_board, data_square):
     """Minho's code, for calibation, figure out the PSM coordinates.
 
     Parameters (x,y) should be in [-1,1] (if not we clip it) and represent
     the coordinate range over the WHITE CLOTH BACKGROUND PLANE (or a
     'checkboard' plane). We then convert to a PSM coordinate.
+
+    Uses bilinear interpolation.
 
     :param row_board: number of rows.
     :param col_board: number of columns.
@@ -126,7 +142,7 @@ def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p,
     :params (x, y, dx, dy): outputs from the neural network.
     :param row_board: number of rows.
     :param col_board: number of columns.
-    :param data_square: data from calibration.
+    :param data_square: data from calibration, from `utils.load_mapping_table`.
     :param p: An instance of `dvrkClothSim`.
     """
     pickup_pos = transform_CB2PSM(x,
