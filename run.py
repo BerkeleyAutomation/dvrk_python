@@ -29,7 +29,6 @@ def run(args, cam, p):
             c_img = cam.read_color_data()
         c_img[np.isnan(c_img)] = 0
 
-
         # TODO Step 2: process it and save as a 100x100 png image using
         # `camera.process_img_for_net()` ideally.
         c_img = camera.process_img_for_net(c_img) #Crop the image and resize to 100x100
@@ -78,7 +77,7 @@ def run(args, cam, p):
 if __name__ == "__main__":
     # I would just set all to reasonable defaults, or put them in the config file.
     pp = argparse.ArgumentParser()
-    # Here's an example of how to add an argument:
+    #parser.add_argument('--use_color', action='store_true')
     #pp.add_argument('--version', type=int, default=0)
     args = pp.parse_args()
 
@@ -86,7 +85,8 @@ if __name__ == "__main__":
     p = dvrkClothSim()
     p.set_position_origin([0.003, 0.001, -0.060], 0, 'deg')
 
-    # TODO: figure out error, I'm getting:
+    # NOTE: figure out error, I'm getting:
+    #
     # Traceback (most recent call last):
     #   File "run.py", line 73, in <module>
     #     cam = camera.RGBD()

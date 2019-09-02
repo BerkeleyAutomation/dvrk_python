@@ -49,6 +49,7 @@ if __name__ == "__main__":
     y = 0.2
     dx = 0.7
     dy = 0.7
+    sys.exit()
     U.move_p_from_net_output(x, y, dx, dy,
                              row_board=row_board,
                              col_board=column_board,

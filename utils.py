@@ -119,7 +119,8 @@ def transform_CB2PSM(x, y, row_board, col_board, data_square):
                                 return 1/(x2-x1)/(y2-y1)*(Q11*(x2-x)*(y2-y) + Q21*(x-x1)*(y2-y) + Q12*(x2-x)*(y-y1) + Q22*(x-x1)*(y-y1))
 
 
-def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p):
+def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p,
+                           debug=False):
     """Minho's code, for calibration, processes policy network output.
 
     :params (x, y, dx, dy): outputs from the neural network.
@@ -139,9 +140,9 @@ def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p):
                                         col_board,
                                         data_square)
     release_pos = np.array([release_pos_temp[0], release_pos_temp[1]])
-    # print pickup_pos, release_pos
+    if debug:
+        print('pickup, release: {}, {}'.format(pickup_pos, release_pos))
     # just checking if the ROS input is fine
     # user_input = raw_input("Are you sure the values to input to the robot arm?(y or n)")
     # if user_input == "y":
     p.move_pose_pickup(pickup_pos, release_pos, 0, 'rad')
-
