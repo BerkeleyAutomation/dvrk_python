@@ -12,6 +12,19 @@ from os.path import join
 #import IPython
 
 
+
+# --------------------------------------------------- #
+# Import these in other scripts
+# --------------------------------------------------- #
+# Tune cutoff carefully, it's in meters.
+CUTOFF_MIN = 0.800
+CUTOFF_MAX = 0.905   # 0.910 will black out background plane, or make it white if we want :-)
+#CUTOFF_MAX = 1.000   # 1.000 will make background look slightly brighter
+IN_PAINT = True
+# --------------------------------------------------- #
+
+
+
 class RGBD(object):
 
     def __init__(self, init_camera=False):
@@ -149,12 +162,6 @@ def process_img_for_net(img):
 
 
 if __name__=='__main__':
-    # Tune cutoff carefully, it's in meters.
-    CUTOFF_MIN = 0.800
-    CUTOFF_MAX = 0.905  # 0.910 will black out background plane, or make it white if we want :-)
-    #CUTOFF_MAX = 1.000   # 1.000 will make background look slightly brighter
-    IN_PAINT = True
-
     rgbd = RGBD(init_camera=True)
     i = 0
     nb_images = 1

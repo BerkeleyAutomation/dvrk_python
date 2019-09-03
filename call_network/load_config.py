@@ -25,7 +25,7 @@ DVRK_IMG_PATH = 'dir_for_imgs/'
 HEAD = '/home/davinci0/seita/dvrk_python/nets/'
 
 # Note: this net was not trained on heavier domain randomization ...
-POLICY = 'openai-2019-08-17-17-30-14-472186/checkpoints/00400'
+POLICY = 'openai-2019-08-30-21-39-05-868283/checkpoints/00199'
 
 NET_FILE = join(HEAD, POLICY)
 

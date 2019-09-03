@@ -1,12 +1,16 @@
 """Shared methods, to be loaded in other code.
 """
+import os
 import sys
+import cv2
 import numpy as np
 from os import path
+from os.path import join
 
 
 ESC_KEYS = [27, 1048603]
 MILLION = float(10**6)
+
 
 def rad_to_deg(rad):
     return np.array(rad) *180./np.pi
@@ -21,6 +25,23 @@ def normalize(v):
     if norm==0:
         norm=np.finfo(v.dtype).eps
     return v/norm
+
+
+def save_image_numbers(head, img, indicator=None, debug=False):
+    """Save image in a directory, but numbered at the end.
+    
+    Example, indicator might be `c_img`. Note: if we import os.path like `from
+    os import path`, then please avoid name conflicts!
+    """
+    if indicator is None:
+        nb = len([x for x in os.listdir(head) if '.png' in x])
+        new_path = join(head, 'img_{}.png'.format(str(nb).zfill(4)))
+    else:
+        nb = len([x for x in os.listdir(head) if indicator in x])
+        new_path = join(head, '{}_{}.png'.format(indicator, str(nb).zfill(4)))
+    if debug:
+        print('saving to: {}'.format(new_path))
+    cv2.imwrite(new_path, img) 
 
 
 def call_wait_key(nothing=None):

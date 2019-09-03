@@ -166,8 +166,9 @@ if __name__ == '__main__':
             if x[-4:]=='.png']
     )
     if len(dvrk_img_paths) > 0:
-        print('there are {} images in {}, please remove'.format(
+        print('There are {} images in {}. Please remove it/them.'.format(
                 len(dvrk_img_paths), cfg.DVRK_IMG_PATH))
+        print('It should be empty to start an episode.')
         sys.exit()
 
     # Let this code run in an infinite loop.
@@ -219,6 +220,6 @@ if __name__ == '__main__':
         date = '{}'.format( datetime.datetime.now().strftime('%Y-%m-%d-%H-%M') )
         save_path = join(cfg.DVRK_IMG_PATH,
                          'result_{}_num_{}.txt'.format(date, str(nb_calls).zfill(3)))
-        np.savetxt(save_path, policy_action)
+        np.savetxt(save_path, policy_action, fmt='%f')
         print('Just did action #{}, with result: {}'.format(nb_calls, policy_action))
         print('Saving to: {}'.format(save_path))
