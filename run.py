@@ -50,19 +50,12 @@ def _process_images(c_img, d_img, debug=True):
         perc = nb_not_nan/float(nb_items)*100
         print('depth image shape {}, has {} items'.format(d_img.shape, nb_items))
         print('  num NOT nan: {}, or {:.2f}%'.format(nb_not_nan, perc))
-
-    # We fill in NaNs with zeros.
     c_img[np.isnan(c_img)] = 0
     d_img[np.isnan(d_img)] = 0
 
-    # We `inpaint` to fill in the zero pixels, done on the raw depth values
-    # before we convert to images. Requries some AUTOLAB dependencies.
-    if camera.IN_PAINT:
-        from perception import (ColorImage, DepthImage)
-        print('in-painting the depth image (this may take a few seconds) ...')
-        d_img = DepthImage(d_img)
-        d_img = d_img.inpaint() # inpaint, then get back right away
-        d_img = d_img.data # get raw numpy data back
+    # We `inpaint` to fill in the zero pixels, done on raw depth values.
+    if C.IN_PAINT:
+        d_img = U.inpaint_depth_img(d_img)
 
     # Process image, but this really means cropping!
     c_img_crop = camera.process_img_for_net(c_img)
@@ -82,8 +75,8 @@ def _process_images(c_img, d_img, debug=True):
     # Let's process depth, from the cropped one, b/c we don't want values
     # out the cropped region to influence any depth 'scaling' calculations.
     d_img_crop = camera.depth_to_3ch(d_img_crop,
-                                     cutoff_min=camera.CUTOFF_MIN,
-                                     cutoff_max=camera.CUTOFF_MAX)
+                                     cutoff_min=C.CUTOFF_MIN,
+                                     cutoff_max=C.CUTOFF_MAX)
     d_img_crop = camera.depth_3ch_to_255(d_img_crop)
 
     # Try blurring depth, bilateral recommends 9 for offline applications

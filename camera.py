@@ -10,19 +10,7 @@ from os.path import join
 #import tf2_ros
 #import tf2_geometry_msgs
 #import IPython
-
-
-
-# --------------------------------------------------- #
-# Import these in other scripts
-# --------------------------------------------------- #
-# Tune cutoff carefully, it's in meters.
-CUTOFF_MIN = 0.800
-CUTOFF_MAX = 0.905   # 0.910 will black out background plane, or make it white if we want :-)
-#CUTOFF_MAX = 1.000   # 1.000 will make background look slightly brighter
-IN_PAINT = True
-# --------------------------------------------------- #
-
+import utils as U
 
 
 class RGBD(object):
@@ -96,7 +84,6 @@ def depth_to_3ch(d_img, cutoff_min, cutoff_max):
 
     Only applies if we're using depth images.
     EDIT: actually we're going to add a min cutoff!
-    UPDATE: also I think we should do inpainting?
     """
     w,h = d_img.shape
     n_img = np.zeros([w, h, 3])
@@ -104,8 +91,7 @@ def depth_to_3ch(d_img, cutoff_min, cutoff_max):
 
     # Instead of this:
     #d_img[d_img>cutoff] = 0.0
-
-    # Do this?
+    # Do this? The cutoff_max means beyond the cutoff, pixels become white.
     #d_img[ d_img>cutoff_max ] = 0.0
     d_img[ d_img>cutoff_max ] = cutoff_max
     d_img[ d_img<cutoff_min ] = cutoff_min
@@ -140,6 +126,8 @@ def depth_3ch_to_255(d_img):
 def process_img_for_net(img):
     """Do any sort of processing of the image for the neural network.
 
+    Only does cropping and re-sizing, for now.
+
     For example, we definitely need to crop, and we may want to do some
     filtering or blurring to smoothen the texture. Our network uses images of
     size (100,100) but as long as we process it and then make sure it has the
@@ -149,13 +137,10 @@ def process_img_for_net(img):
     Processing should be done before the cropping, because doing filtering after
     cropping results in very blurry images (the filters cover a wider range).
     """
-    # TODO add processing, blurring, etc.
-    # Older way
-    #img = img[175:675, 50:550]
-
     # First component 'height', second component 'width'.  Decrease 'height'
     # values to get images higher up, decrease 'width' to make it move left.
-    img = img[140:640, 585:1085]
+    img = img[135:635, 585:1085]
+    assert img.shape[0] == img.shape[1]
 
     img = cv2.resize(img, (100, 100))
     return img
@@ -165,7 +150,12 @@ if __name__=='__main__':
     rgbd = RGBD(init_camera=True)
     i = 0
     nb_images = 1
-    head = "/home/davinci0/seita/dvrk_python/dir_for_imgs"
+    head = "/home/davinci0/seita/dvrk_python/tmp"
+
+    # For real physical robot experiments, use these values in `config.py`.
+    CUTOFF_MIN = 0.800
+    CUTOFF_MAX = 0.905
+    IN_PAINT = True
 
     while i < nb_images:
         print(os.listdir(head))
@@ -196,19 +186,13 @@ if __name__=='__main__':
         c_img[np.isnan(c_img)] = 0
         d_img[np.isnan(d_img)] = 0
 
+        # Images are 1200 x 1920, with 3 channels (well, we force for depth).
+        assert d_img.shape == (1200, 1920), d_img.shape
+        assert c_img.shape == (1200, 1920, 3), c_img.shape
+
         # BUT we can call `inpaint` which will fill in the zero pixels!
-        # Actually only for the depth ... right? And I think this should be
-        # after we get an image scaled into [0,255], right? I don't see GQCNN
-        # doing that, though, they just do inpainting right after the depth
-        # image is created, but IDK if they do other processing before loading
-        # that depth image. And doign it later will result in some problems...
         if IN_PAINT:
-            # Only call here to avoid making this a dependency.
-            from perception import (ColorImage, DepthImage)
-            print('now in-painting the depth image ...')
-            d_img = DepthImage(d_img)
-            d_img = d_img.inpaint() # inpaint, I think it's OK right after?
-            d_img = d_img.data # get raw data back
+            d_img = U.inpaint_depth_image(d_img)
 
         # Check depth image. Also, we have to tune the cutoff.
         # The depth is clearly in METERS, but I think it's hard to get an
@@ -238,9 +222,6 @@ if __name__=='__main__':
         d_img      = depth_3ch_to_255(d_img)
         d_img_crop = depth_3ch_to_255(d_img_crop)
 
-        # Images are 1200 x 1920, with 3 channels (well, we force for depth).
-        assert d_img.shape == (1200, 1920, 3), d_img.shape
-        assert c_img.shape == (1200, 1920, 3), c_img.shape
         c_img_crop = process_img_for_net(c_img)
         assert c_img_crop.shape[0] == c_img_crop.shape[1], c_img.shape
 

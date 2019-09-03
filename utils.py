@@ -3,21 +3,23 @@
 import os
 import sys
 import cv2
+import time
 import numpy as np
 from os import path
 from os.path import join
 
 
+# Useful constants.
 ESC_KEYS = [27, 1048603]
 MILLION = float(10**6)
 
 
 def rad_to_deg(rad):
-    return np.array(rad) *180./np.pi
+    return np.array(rad) * 180./np.pi
 
 
 def deg_to_rad(deg):
-    return np.array(deg) *np.pi/180.
+    return np.array(deg) * np.pi/180.
 
 
 def normalize(v):
@@ -50,6 +52,28 @@ def call_wait_key(nothing=None):
     if key in ESC_KEYS:
         print("Pressed ESC key. Terminating program...")
         sys.exit()
+
+
+def inpaint_depth_image(d_img):
+    """Inpaint depth image on raw depth values.
+
+    Only import code here to avoid making them required if we're not inpainting.
+
+    Also, inpainting is slow, so crop some irrelevant values. But BE CAREFUL!
+    Make sure any cropping here will lead to logical consistency with the
+    processing in `camera.process_img_for_net` later. For now we crop the 'later
+    part' of each dimension, which still leads to > 2x speed-up.
+    """
+    d_img = d_img[:800,:1300]
+    from perception import (ColorImage, DepthImage)
+    print('now in-painting the depth image (shape {})...'.format(d_img.shape))
+    start_t = time.time()
+    d_img = DepthImage(d_img)
+    d_img = d_img.inpaint()     # inpaint, then get d_img right away
+    d_img = d_img.data          # get raw data back from the class
+    cum_t = time.time() - start_t
+    print('finished in-painting in {:.2f} seconds'.format(cum_t))
+    return d_img
 
 
 def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):

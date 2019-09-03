@@ -22,6 +22,18 @@ RED   = (0,0,255)
 # ---------------------------------------------------------------------------- #
 DVRK_IMG_PATH = 'dir_for_imgs/'
 
+
+# ---------------------------------------------------------------------------- #
+# Camera configuration, keep separate from internal `camera.py` testing.
+# Tune cutoff carefully, it's in meters.
+# A maxval of 0.910 will black out background plane, or make it white if we want
+# :-). Using 1.000 will make background look slightly brighter
+# ---------------------------------------------------------------------------- #
+CUTOFF_MIN = 0.800
+CUTOFF_MAX = 0.905
+IN_PAINT = True
+
+
 # ---------------------------------------------------------------------------- #
 # CALIBRATION FILE
 # ---------------------------------------------------------------------------- #
