@@ -184,26 +184,52 @@ def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p,
                            debug=False):
     """Minho's code, for calibration, processes policy network output.
 
-    :params (x, y, dx, dy): outputs from the neural network.
+    Be careful, the x,y coordinate from the neural net refers to a coordinate
+    range of [-1,1] in the x and y directions. Thus, (x,y) = (-1,-1) is the
+    BOTTOM LEFT CORNER.
+
+    However, in simulation, we first converted (x,y) into the range [0,1] by
+    dividing by two (to get values in [-0.5,0.5]) and then adding 0.5. Then,
+    given x and y values that ranged from [0,1], we deduced a dx and dy such
+    that ... when we apply the action, dx and dy independently 'adjust' x and y.
+    So it is indeed (x+dx) and (y+dy). To convert this to our case, it should be
+    as simple as doubling the dx and dy values.
+    
+    It's a bit trick to understand by reading gym-cloth code, because I first
+    convert dx and dy into other values, and then I repeatdly do motions until
+    the full length is achieved.
+    
+    :params (x, y, dx, dy): outputs from the neural network, all in [-1,1].
     :param row_board: number of rows.
     :param col_board: number of columns.
     :param data_square: data from calibration, from `utils.load_mapping_table`.
     :param p: An instance of `dvrkClothSim`.
     """
+    assert -1 <= x <= 1, x
+    assert -1 <= y <= 1, y
+    assert -1 <= dx <= 1, dx
+    assert -1 <= dy <= 1, dy
+
+    # Find the targets, and then get pose w.r.t. PSM.
+    targ_x = x + 2*dx
+    targ_y = y + 2*dy
     pickup_pos = transform_CB2PSM(x,
                                   y,
                                   row_board,
                                   col_board,
                                   data_square)
-    release_pos_temp = transform_CB2PSM(x+dx,
-                                        y+dy,
+    release_pos_temp = transform_CB2PSM(targ_x,
+                                        targ_y,
                                         row_board,
                                         col_board,
                                         data_square)
+
     release_pos = np.array([release_pos_temp[0], release_pos_temp[1]])
     if debug:
         print('pickup, release: {}, {}'.format(pickup_pos, release_pos))
     # just checking if the ROS input is fine
     # user_input = raw_input("Are you sure the values to input to the robot arm?(y or n)")
     # if user_input == "y":
+
     p.move_pose_pickup(pickup_pos, release_pos, 0, 'rad')
+

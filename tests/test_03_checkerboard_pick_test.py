@@ -16,9 +16,24 @@ if __name__ == "__main__":
     row_board = 6
     column_board = 6
     cloth_height = 0.0    # unit = (m)
-    data_square = U.load_mapping_table(row_board, column_board, 'mapping_table', cloth_height)
+    data_square = U.load_mapping_table(row_board,
+                                       column_board,
+                                       'mapping_table',
+                                       cloth_height)
     p = dvrkClothSim()
     p.set_position_origin([0.003, 0.001, -0.06], 0, 'deg')
+
+    # Do this just to do one action.
+    x = -1.0
+    y = -1.0
+    dx = 1.0
+    dy = 1.0
+    U.move_p_from_net_output(x, y, dx, dy,
+                             row_board, column_board,
+                             data_square, p, debug=True)
+    sys.exit()
+
+    # Do this to go through all points.
     for i in range(row_board):
         for j in range(column_board):
             x = -1 + j * 0.4
