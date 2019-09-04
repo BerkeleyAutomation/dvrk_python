@@ -20,7 +20,7 @@ if __name__ == "__main__":
     cloth_height = 0.0    # unit = (m)
     data_square = U.load_mapping_table(row_board,
                                        column_board,
-                                       'mapping_table_09-01',
+                                       'mapping_table_09-04_second_calib',
                                        cloth_height)
     p = dvrkClothSim()
     p.set_position_origin([0.003, 0.001, -0.06], 0, 'deg')
@@ -28,14 +28,13 @@ if __name__ == "__main__":
     print('current arm pose: {}'.format(pose_deg))
 
     # Do this just to do one action, to check if calibration is working. Make
-    # dx,dy both zeor so we are not going anywhere else.
-    x = -1.0
-    y = -1.0
+    # dx,dy both zero so the robot does not move to a second spot.
+    x = 1.0
+    y = 1.0
     dx = 0.0
     dy = 0.0
-    U.move_p_from_net_output(x, y, dx, dy,
-                             row_board, column_board,
-                             data_square, p, debug=True)
+    U.move_p_from_net_output(x, y, dx, dy, row_board, column_board, data_square,
+            p, debug=True, only_do_pick=True)
     sys.exit()
 
     # Do this to go through all points.

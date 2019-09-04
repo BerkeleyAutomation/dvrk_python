@@ -178,7 +178,7 @@ def transform_CB2PSM(x, y, row_board, col_board, data_square):
 
 
 def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p,
-                           debug=False):
+                           debug=False, only_do_pick=False):
     """Minho's code, for calibration, processes policy network output.
 
     Be careful, the x,y coordinate from the neural net refers to a coordinate
@@ -229,5 +229,5 @@ def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p,
     # user_input = raw_input("Are you sure the values to input to the robot arm?(y or n)")
     # if user_input == "y":
 
-    p.move_pose_pickup(pickup_pos, release_pos, 0, 'rad')
+    p.move_pose_pickup(pickup_pos, release_pos, 0, 'rad', only_do_pick=only_do_pick)
 
