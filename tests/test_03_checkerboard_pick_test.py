@@ -20,7 +20,7 @@ if __name__ == "__main__":
     cloth_height = 0.0    # unit = (m)
     data_square = U.load_mapping_table(row_board,
                                        column_board,
-                                       'mapping_table_09_01',
+                                       'mapping_table_09-01',
                                        cloth_height)
     p = dvrkClothSim()
     p.set_position_origin([0.003, 0.001, -0.06], 0, 'deg')

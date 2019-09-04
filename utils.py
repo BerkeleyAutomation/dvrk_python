@@ -95,12 +95,9 @@ def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
     :param cloth_height: height offset, we add to the z values from the data.
     :return: data from calibration
     """
-    if path.exists(file_name):
-        # import data from file
-        data_default = np.loadtxt(file_name, delimiter=',')
-    else:
-        # if file does not exist, set default
-        data_default = np.zeros((row_board * column_board, 5))
+    assert os.path.exists(file_name), \
+            'The file does not exist: {}'.format(file_name)
+    data_default = np.loadtxt(file_name, delimiter=',')
 
     cnt = 0
     for i in range(row_board):
@@ -226,7 +223,8 @@ def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p,
 
     release_pos = np.array([release_pos_temp[0], release_pos_temp[1]])
     if debug:
-        print('pickup, release: {}, {}'.format(pickup_pos, release_pos))
+        print('pickup position wrt PSM: {}'.format(pickup_pos))
+        print('release position wrt PSM: {}'.format(release_pos))
     # just checking if the ROS input is fine
     # user_input = raw_input("Are you sure the values to input to the robot arm?(y or n)")
     # if user_input == "y":
