@@ -9,6 +9,8 @@ you make the arm go to 0 degrees yaw but it's always stuck at 100 degrees, for
 example) then it's likely that either something's broken, or that the arm is
 simply near or at the limit of its 'workspace.' For the latter, simply rotate
 the arm back to more of a 'central' state, if that makes sense.
+
+NOTE: might as well use this for calibration.
 """
 import sys
 sys.path.append('..')
@@ -21,8 +23,20 @@ import numpy as np
 np.set_printoptions(suppress=True)
 
 
+def _calibrate(p):
+    pose_rad = p.get_current_pose()
+    pose_deg = p.get_current_pose(unit='deg')
+    pos, rot = pose_deg
+    #print('starting pose (deg):\n{}\n{}'.format(pos,rot))
+    print('starting pose (deg): {}'.format(pose_deg))
+
+
 if __name__ == "__main__":
     p = dvrkArm('/PSM2')
+    _calibrate(p)
+    sys.exit()
+
+    # Other stuff.
     pose_frame = p.get_current_pose_frame()
     pose_rad = p.get_current_pose()
     pose_deg = p.get_current_pose(unit='deg')

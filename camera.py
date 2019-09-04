@@ -139,7 +139,7 @@ def process_img_for_net(img):
     """
     # First component 'height', second component 'width'.  Decrease 'height'
     # values to get images higher up, decrease 'width' to make it move left.
-    img = img[135:635, 585:1085]
+    img = img[135:635, 580:1080]
     assert img.shape[0] == img.shape[1]
 
     img = cv2.resize(img, (100, 100))
