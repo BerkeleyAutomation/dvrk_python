@@ -46,12 +46,16 @@ def save_image_numbers(head, img, indicator=None, debug=False):
     cv2.imwrite(new_path, img) 
 
 
-def call_wait_key(nothing=None):
+def call_wait_key(nothing=None, force_exit=False):
     """Call this like: `utils.call_wait_key( cv2.imshow(...) )`."""
     key = cv2.waitKey(0)
     if key in ESC_KEYS:
         print("Pressed ESC key. Terminating program...")
-        sys.exit()
+        if force_exit:
+            sys.exit()
+        else:
+            return True
+    return False
 
 
 def inpaint_depth_image(d_img):

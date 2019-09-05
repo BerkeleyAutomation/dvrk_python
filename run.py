@@ -20,6 +20,7 @@ import sys
 import time
 import datetime
 import cv2
+import pickle
 import numpy as np
 np.set_printoptions(suppress=True)
 from collections import defaultdict
@@ -93,13 +94,13 @@ def _process_images(c_img, d_img, args, debug=True):
     return c_img_crop, d_img_crop
 
 
-def run(args, cam, p, max_ep_length=10):
+def run(args, cam, p):
     """Run one episode, record statistics, etc."""
     stats = defaultdict(list)
 
-    for i in range(max_ep_length):
+    for i in range(args.max_ep_length):
         print('\n*************************************')
-        print('ON TIME STEP (I.E., ACTION) NUMBER {}'.format(i))
+        print('ON TIME STEP (I.E., ACTION) NUMBER {}'.format(i+1))
         print('*************************************\n')
 
         # ----------------------------------------------------------------------
@@ -155,10 +156,12 @@ def run(args, cam, p, max_ep_length=10):
         print(c_img.shape, d_img.shape)
         title = '{} -- ESC TO CANCEL (Or if episode done)'.format(action)
         if args.use_color:
-            U.call_wait_key( cv2.imshow(title, c_img) )
+            exit = U.call_wait_key( cv2.imshow(title, c_img) )
         else:
-            U.call_wait_key( cv2.imshow(title, d_img) )
+            exit = U.call_wait_key( cv2.imshow(title, d_img) )
         cv2.destroyAllWindows()
+        if exit:
+            break
 
         # ----------------------------------------------------------------------
         # STEP 5: Watch the robot do its action. Terminate the script if the
@@ -178,22 +181,38 @@ def run(args, cam, p, max_ep_length=10):
         # STEP 6. Record statistics. Sleep just in case, also reset images.
         # ----------------------------------------------------------------------
         stats['actions'].append(action)
+        stats['c_img'].append(c_img)
+        stats['d_img'].append(d_img)
         cam.set_color_none()
         cam.set_depth_none()
         print('Reset color/depth in camera class, waiting a few seconds ...')
         time.sleep(3)
 
     # Final book-keeping and return statistics.
-    print('All done with episode!')
+    if args.use_color:
+        save_path = join('results', 'tier{}_color'.format(args.tier))
+    else:
+        save_path = join('results', 'tier{}_depth'.format(args.tier))
+    if not os.path.exists(save_path):
+        os.makedirs(save_path, exist_ok=True)
+    count = len([x for x in os.listdir('results') if 'ep_' in x and '.pkl' in x])
+    save_path = join(save_path, 'ep_{}.pkl'.format(str(count).zfill(3)))
+    print('All done with episode! Saving stats to: {}'.format(save_path))
+    with open(save_path, 'wb') as fh:
+        pickle.dump(stats, fh)
     return stats
 
 
 if __name__ == "__main__":
     # I would just set all to reasonable defaults, or put them in the config file.
     parser= argparse.ArgumentParser()
-    parser.add_argument('--use_color', action='store_true')
-    parser.add_argument('--trial', type=int, default=0)
+    #parser.add_argument('--use_color', action='store_true') # I'll forget ...
+    parser.add_argument('--use_color', type=int) # 1 = True
+    parser.add_argument('--tier', type=int)
+    parser.add_argument('--max_ep_length', type=int, default=6)
     args = parser.parse_args()
+    assert args.tier is not None
+    assert args.use_color is not None
     print('Running with arguments:\n{}'.format(args))
 
     # Setup

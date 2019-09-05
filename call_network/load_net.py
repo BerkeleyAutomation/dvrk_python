@@ -218,8 +218,9 @@ if __name__ == '__main__':
         )
         nb_calls = len(net_results)+1
         date = '{}'.format( datetime.datetime.now().strftime('%Y-%m-%d-%H-%M') )
-        save_path = join(cfg.DVRK_IMG_PATH,
-                         'result_{}_num_{}.txt'.format(date, str(nb_calls).zfill(3)))
+        pol = (cfg.WHICH_POLICY).split('/')[0]
+        tail = 'result_{}_{}_num_{}.txt'.format(date, pol, str(nb_calls).zfill(3))
+        save_path = join(cfg.DVRK_IMG_PATH, tail)
         np.savetxt(save_path, policy_action, fmt='%f')
         print('Just did action #{}, with result: {}'.format(nb_calls, policy_action))
         print('Saving to: {}'.format(save_path))
