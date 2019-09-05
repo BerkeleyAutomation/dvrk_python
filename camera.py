@@ -73,10 +73,17 @@ class RGBD(object):
 
     def read_depth_data(self):
         return self.img_depth_raw
-        # return self.img_rgb_raw
 
     def read_info_data(self):
         return self._info
+
+    def set_color_none(self):
+        """Added to allow ENTER in `run.py` to get one single image from zivid camera."""
+        self.img_rgb_raw = None
+
+    def set_depth_none(self):
+        """Added to allow ENTER in `run.py` to get one single image from zivid camera."""
+        self.img_depth_raw = None
 
 
 def depth_to_3ch(d_img, cutoff_min, cutoff_max):

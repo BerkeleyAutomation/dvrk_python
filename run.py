@@ -31,7 +31,7 @@ from dvrkClothSim import dvrkClothSim
 import camera
 
 
-def _process_images(c_img, d_img, debug=True):
+def _process_images(c_img, d_img, args, debug=True):
     """Process images to make it suitable for deep neural networks.
     
     Mostly mirrors my tests in `camera.py`.
@@ -53,9 +53,11 @@ def _process_images(c_img, d_img, debug=True):
     c_img[np.isnan(c_img)] = 0
     d_img[np.isnan(d_img)] = 0
 
-    # We `inpaint` to fill in the zero pixels, done on raw depth values.
-    if C.IN_PAINT:
-        d_img = U.inpaint_depth_img(d_img)
+    # We `inpaint` to fill in the zero pixels, done on raw depth values. Skip if
+    # we're not doing color images due to time? Though we have to be careful if
+    # we want to report both color/depth together?
+    if C.IN_PAINT and (not args.use_color):
+        d_img = U.inpaint_depth_image(d_img)
 
     # Process image, but this really means cropping!
     c_img_crop = camera.process_img_for_net(c_img)
@@ -96,18 +98,28 @@ def run(args, cam, p, max_ep_length=10):
     stats = defaultdict(list)
 
     for i in range(max_ep_length):
-        # STEP 1: query the image from the camera class using `cam`.
+        print('\n*************************************')
+        print('ON TIME STEP (I.E., ACTION) NUMBER {}'.format(i))
+        print('*************************************\n')
+
+        # ----------------------------------------------------------------------
+        # STEP 1: query the image from the camera class using `cam`. To avoid
+        # the flashing strobe light, you have to move to the tab with the camera.
+        # ----------------------------------------------------------------------
         c_img = None
         d_img = None
+        print('Waiting for c_img, & d_img; please press ENTER in the appropriate tab')
         while c_img is None:
             c_img = cam.read_color_data()
         while d_img is None:
             d_img = cam.read_depth_data()
-        print('time {}, we have c_img and d_img'.format(i))
+        print('  obtained the c_img and d_img')
 
+        # ----------------------------------------------------------------------
         # STEP 2: process image and save as a 100x100 png, see `camera.py` for some
         # tests. Image must be saved in specified DVRK_IMG_PATH for the net to see.
-        c_img, d_img = _process_images(c_img, d_img)
+        # ----------------------------------------------------------------------
+        c_img, d_img = _process_images(c_img, d_img, args)
         assert c_img.shape == (100,100,3), c_img.shape
         assert d_img.shape == (100,100,3), d_img.shape
         if args.use_color:
@@ -122,9 +134,11 @@ def run(args, cam, p, max_ep_length=10):
         print('  now wait a few seconds for network to run')
         time.sleep(5)
 
+        # ----------------------------------------------------------------------
         # STEP 3: get the output from the neural network loading class (you did
         # run it in a separate terminal tab, right?) and then show it to a human.
         # HUGE ASSUMPTION: that the last text file indicates the action we want.
+        # ----------------------------------------------------------------------
         dvrk_action_paths = sorted(
                 [join(C.DVRK_IMG_PATH,x) for x in os.listdir(C.DVRK_IMG_PATH) \
                     if x[-4:]=='.txt']
@@ -133,18 +147,23 @@ def run(args, cam, p, max_ep_length=10):
         action = np.loadtxt(dvrk_action_paths[-1])
         print('neural net says: {}'.format(action))
 
-        # STEP 4. If the output would result in a dangerous position, human stops
-        # by hitting ESC key. Otherwise, press any other key to continue.
+        # ----------------------------------------------------------------------
+        # STEP 4. If the output would result in a dangerous position, human
+        # stops by hitting ESC key. Otherwise, press any other key to continue.
+        # ALSO this is where the human should terminate the episode!
+        # ----------------------------------------------------------------------
         print(c_img.shape, d_img.shape)
-        title = '{} -- ESC TO CANCEL'.format(action)
+        title = '{} -- ESC TO CANCEL (Or if episode done)'.format(action)
         if args.use_color:
             U.call_wait_key( cv2.imshow(title, c_img) )
         else:
             U.call_wait_key( cv2.imshow(title, d_img) )
         cv2.destroyAllWindows()
 
+        # ----------------------------------------------------------------------
         # STEP 5: Watch the robot do its action. Terminate the script if the
         # resulting action makes things fail spectacularly.
+        # ----------------------------------------------------------------------
         x  = action[0]
         y  = action[1]
         dx = action[2]
@@ -155,9 +174,14 @@ def run(args, cam, p, max_ep_length=10):
                                  data_square=C.DATA_SQUARE,
                                  p=p)
 
-        # STEP 6. Record statistics. Sleep to let arm move out of the way.
+        # ----------------------------------------------------------------------
+        # STEP 6. Record statistics. Sleep just in case, also reset images.
+        # ----------------------------------------------------------------------
         stats['actions'].append(action)
-        time.sleep(4)
+        cam.set_color_none()
+        cam.set_depth_none()
+        print('Reset color/depth in camera class, waiting a few seconds ...')
+        time.sleep(3)
 
     # Final book-keeping and return statistics.
     print('All done with episode!')

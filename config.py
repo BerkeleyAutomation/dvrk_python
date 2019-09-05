@@ -38,10 +38,10 @@ IN_PAINT = True
 # CALIBRATION FILE
 # ---------------------------------------------------------------------------- #
 
-CALIB_FILE = 'tests/mapping_table'
+CALIB_FILE = 'tests/mapping_table_09-04_second_calib'
 ROW_BOARD = 6
 COL_BOARD = 6
-CLOTH_HEIGHT = -0.006  # meters
+CLOTH_HEIGHT = -0.007  # meters
 
 DATA_SQUARE = U.load_mapping_table(row_board=ROW_BOARD,
                                    column_board=COL_BOARD,

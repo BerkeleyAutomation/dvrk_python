@@ -21,13 +21,20 @@ DVRK_IMG_PATH = 'dir_for_imgs/'
 
 # ---------------------------------------------------------------------------- #
 # ADJUST WHICH NEURAL NETWORK WE WANT TO USE
+# And be sure we adjust if we use color or depth for `run.py`.
 # ---------------------------------------------------------------------------- #
 HEAD = '/home/davinci0/seita/dvrk_python/nets/'
 
-# Note: this net was not trained on heavier domain randomization ...
-POLICY = 'openai-2019-08-30-21-39-05-868283/checkpoints/00199'
+POL_01 = 'openai-2019-09-02-23-03-41-443793_tier1_color_50k/checkpoints/00249'
+POL_02 = 'openai-2019-09-02-23-01-55-146225_tier1_depth_50k/checkpoints/00249'
 
-NET_FILE = join(HEAD, POLICY)
+POL_03 = 'openai-2019-09-01-20-37-45-609860_tier2_color_50k/checkpoints/00249'
+POL_04 = '/checkpoints/00249'
+
+POL_05 = 'openai-2019-09-02-19-30-13-323241_tier3_color_50k/checkpoints/00249'
+POL_06 = 'openai-2019-09-02-19-25-40-802588_tier3_depth_50k/checkpoints/00249'
+
+NET_FILE = join(HEAD, POL_01)
 
 
 # ---------------------------------------------------------------------------- #
