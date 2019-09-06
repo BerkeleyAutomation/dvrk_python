@@ -102,6 +102,7 @@ def depth_to_3ch(d_img, cutoff_min, cutoff_max):
     #d_img[ d_img>cutoff_max ] = 0.0
     d_img[ d_img>cutoff_max ] = cutoff_max
     d_img[ d_img<cutoff_min ] = cutoff_min
+    print('max/min depth after cutoff: {:.3f} {:.3f}'.format(np.max(d_img), np.min(d_img)))
 
     d_img = d_img.reshape([w,h])
     for i in range(3):

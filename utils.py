@@ -85,7 +85,7 @@ def inpaint_depth_image(d_img, ix=0, iy=0):
     return d_img
 
 
-def calculate_coverage(c_img, bounding_dims=(11,86,12,87), rgb_cutoff=180, display=False):
+def calculate_coverage(c_img, bounding_dims=(11,87,10,88), rgb_cutoff=170, display=False):
     """
     Given precomputed constant preset locations that represent the corners in a
     clockwise order, it computes the percent of pixels that are above a certain
@@ -288,7 +288,21 @@ def single_means(img, depth):
     print('  ch 1: {:.1f} +/- {:.1f}'.format(np.mean(img[:,:,0]), np.std(img[:,:,0])))
     print('  ch 2: {:.1f} +/- {:.1f}'.format(np.mean(img[:,:,1]), np.std(img[:,:,1])))
     print('  ch 3: {:.1f} +/- {:.1f}'.format(np.mean(img[:,:,2]), np.std(img[:,:,2])))
-    print('')
+
+
+def _adjust_gamma(image, gamma=1.0):
+    """For darkening images.
+
+    Builds a lookup table mapping the pixel values [0, 255] to their
+    adjusted gamma values.
+
+    https://www.pyimagesearch.com/2015/10/05/opencv-gamma-correction/
+    """
+    invGamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** invGamma) * 255 \
+            for i in np.arange(0, 256)]).astype("uint8")
+    # apply gamma correction using the lookup table
+    return cv2.LUT(image, table)
 
 
 if __name__ == "__main__":
@@ -305,21 +319,74 @@ if __name__ == "__main__":
     images_d = [cv2.imread(x) for x in img_paths_d]
 
     # Compute means, compare with simulated data.
-    print('depth:')
+    print('depth across all data in directory:')
     _ = print_means(images_d)
-    print('color:')
+    print('color across all data in directory:')
     _ = print_means(images)
    
     # Inspect coverage.
     nb_imgs = len(img_paths)
     print('num images: {}'.format(nb_imgs))
 
+    # Ignore if I want to skip.
     for idx,(img,fname) in enumerate(zip(images,img_paths)):
-        coverage = calculate_coverage(img, bounding_dims=(10,87,11,89), display=True)
+        coverage = calculate_coverage(img, display=True)
         print('  image {} at {} has coverage {:.2f}'.format(idx, fname, coverage*100))
 
-    # Save any modified images.
-    #for idx,(img,fname) in enumerate(zip(images,img_paths)):
-    #    coverage = calculate_coverage(img, bounding_dims=(10,87,11,89), display=True)
-    #    print('  image {} at {} has coverage {:.2f}'.format(idx, fname, coverage*100))
+    sys.exit()
 
+    # Daniel NOTE! I was using this for debugging if we wanted to forcibly
+    # adjust pixel values to get them in line with the training data.
+    # Fortunately it seems close enough that we don't have to change anything.
+
+    # Save any modified images. DEPTH here. Works well.
+    if True:
+        for idx,(img,fname) in enumerate(zip(images_d,img_paths_d)):
+            print('  on image {}'.format(fname))
+            single_means(img, depth=True)
+
+            meanval = np.mean(img)
+            target_meanval = 135.0
+            img = np.minimum(np.maximum( img+(target_meanval-meanval), 0), 255)
+            img = np.uint8(img)
+            print('after correcting:')
+            single_means(img, depth=True)
+            
+            savepath = fname.replace('tmp','tmp2')
+            print('saving to: {}\n'.format(savepath))
+            cv2.imwrite(savepath, img)
+
+    # Save any modified images. RGB here. NOTE: doesn't work quite well
+    if False:
+        for idx,(img,fname) in enumerate(zip(images,img_paths)):
+            print('  on image {}'.format(fname))
+            single_means(img, depth=False)
+
+            mean_0 = np.mean(img[:,:,0])
+            mean_1 = np.mean(img[:,:,1])
+            mean_2 = np.mean(img[:,:,2])
+
+            means = np.array([mean_0, mean_1, mean_2])
+            targets = np.array([155.0, 110.0, 85.0])
+            img = np.minimum(np.maximum( img+(targets-means), 0), 255)
+            img = np.uint8(img)
+            print('after correcting:')
+            single_means(img, depth=False)
+            
+            savepath = fname.replace('tmp','tmp2')
+            print('saving to: {}\n'.format(savepath))
+            cv2.imwrite(savepath, img)
+
+    # Now for RGB gamma corrections.
+    if True:
+        for idx,(img,fname) in enumerate(zip(images,img_paths)):
+            print('  on image {}'.format(fname))
+            single_means(img, depth=False)
+
+            img = _adjust_gamma(img, gamma=1.5)
+            print('after correcting:')
+            single_means(img, depth=False)
+            
+            savepath = fname.replace('tmp','tmp2')
+            print('saving to: {}\n'.format(savepath))
+            cv2.imwrite(savepath, img)

@@ -29,8 +29,8 @@ DVRK_IMG_PATH = 'dir_for_imgs/'
 # A maxval of 0.910 will black out background plane, or make it white if we want
 # :-). Using 1.000 will make background look slightly brighter
 # ---------------------------------------------------------------------------- #
-CUTOFF_MIN = 0.800
-CUTOFF_MAX = 0.905
+CUTOFF_MIN = 0.790
+CUTOFF_MAX = 0.895
 IN_PAINT = True
 
 
