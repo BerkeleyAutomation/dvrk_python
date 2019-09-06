@@ -85,6 +85,34 @@ def inpaint_depth_image(d_img, ix=0, iy=0):
     return d_img
 
 
+def calculate_coverage(c_img, bounding_dims=(11,86,12,87), rgb_cutoff=180, display=False):
+    """
+    Given precomputed constant preset locations that represent the corners in a
+    clockwise order, it computes the percent of pixels that are above a certain
+    threshold in that region which represents the percent coverage.
+
+    The bounding dimensions represent (min_x, max_x, min_y, max_y). To decrease
+    height, confusingly, decrease min_x and max_x.  The default bounding_dims
+    work well empirically. COLOR IMAGES ONLY!!
+
+    Returns a value between [0,1].
+    """
+    min_x, max_x, min_y, max_y = bounding_dims
+    substrate = c_img[min_x:max_x,min_y:max_y,:]
+    is_not_covered = np.logical_and(np.logical_and(substrate[:,:,0] > rgb_cutoff,
+        substrate[:,:,1] > rgb_cutoff), substrate[:,:,2] > rgb_cutoff)
+
+    # can display this fake image to sanity check this method
+    fake_image = np.array(is_not_covered * 255, dtype = np.uint8)
+    if display:
+        cv2.imshow("1", substrate)
+        cv2.imshow("2", fake_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    return 1.0 - (np.sum(is_not_covered) / float(is_not_covered.size))
+
+
 def load_mapping_table(row_board, column_board, file_name, cloth_height=0.005):
     """Load the mapping table which we need to map from neural net to action.
 
@@ -239,4 +267,59 @@ def move_p_from_net_output(x, y, dx, dy, row_board, col_board, data_square, p,
     # if user_input == "y":
 
     p.move_pose_pickup(pickup_pos, release_pos, 0, 'rad', only_do_pick=only_do_pick)
+
+
+def print_means(images):
+    average_img = np.zeros((100,100,3))
+    for img in images:
+        average_img += img
+    a_img = average_img / len(images)
+    print('ch 1: {:.1f} +/- {:.1f}'.format(np.mean(a_img[:,:,0]), np.std(a_img[:,:,0])))
+    print('ch 2: {:.1f} +/- {:.1f}'.format(np.mean(a_img[:,:,1]), np.std(a_img[:,:,1])))
+    print('ch 3: {:.1f} +/- {:.1f}'.format(np.mean(a_img[:,:,2]), np.std(a_img[:,:,2])))
+    return a_img
+
+
+def single_means(img, depth):
+    if depth:
+        print('Depth img:')
+    else:
+        print('Color img:')
+    print('  ch 1: {:.1f} +/- {:.1f}'.format(np.mean(img[:,:,0]), np.std(img[:,:,0])))
+    print('  ch 2: {:.1f} +/- {:.1f}'.format(np.mean(img[:,:,1]), np.std(img[:,:,1])))
+    print('  ch 3: {:.1f} +/- {:.1f}'.format(np.mean(img[:,:,2]), np.std(img[:,:,2])))
+    print('')
+
+
+if __name__ == "__main__":
+    # This should not be called normally! Just for testing and debugging.
+
+    # Directory of images.
+    img_paths = sorted(
+            [join('tmp',x) for x in os.listdir('tmp/') if 'c_img' in x and '.png' in x]
+    )
+    images = [cv2.imread(x) for x in img_paths]
+    img_paths_d = sorted(
+            [join('tmp',x) for x in os.listdir('tmp/') if 'd_img' in x and '.png' in x]
+    )
+    images_d = [cv2.imread(x) for x in img_paths_d]
+
+    # Compute means, compare with simulated data.
+    print('depth:')
+    _ = print_means(images_d)
+    print('color:')
+    _ = print_means(images)
+   
+    # Inspect coverage.
+    nb_imgs = len(img_paths)
+    print('num images: {}'.format(nb_imgs))
+
+    for idx,(img,fname) in enumerate(zip(images,img_paths)):
+        coverage = calculate_coverage(img, bounding_dims=(10,87,11,89), display=True)
+        print('  image {} at {} has coverage {:.2f}'.format(idx, fname, coverage*100))
+
+    # Save any modified images.
+    #for idx,(img,fname) in enumerate(zip(images,img_paths)):
+    #    coverage = calculate_coverage(img, bounding_dims=(10,87,11,89), display=True)
+    #    print('  image {} at {} has coverage {:.2f}'.format(idx, fname, coverage*100))
 

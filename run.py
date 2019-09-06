@@ -89,6 +89,8 @@ def _process_images(c_img, d_img, args, debug=True):
     d_img_crop_blur = cv2.bilateralFilter(d_img_crop, 9, 100, 100)
     #d_img_crop_blur = cv2.medianBlur(d_img_crop_blur, 5)
 
+    # TODO: adjust mean pixel values?
+
     # Let's save externally but we can do quick debugging here.
     U.save_image_numbers('tmp', img=c_img_crop, indicator='c_img', debug=True)
     U.save_image_numbers('tmp', img=d_img_crop, indicator='d_img', debug=True)
@@ -99,6 +101,7 @@ def _process_images(c_img, d_img, args, debug=True):
 def run(args, cam, p):
     """Run one episode, record statistics, etc."""
     stats = defaultdict(list)
+    COVERAGE_SUCCESS = 0.92
 
     for i in range(args.max_ep_length):
         print('\n*************************************')
@@ -121,6 +124,7 @@ def run(args, cam, p):
         # ----------------------------------------------------------------------
         # STEP 2: process image and save as a 100x100 png, see `camera.py` for some
         # tests. Image must be saved in specified DVRK_IMG_PATH for the net to see.
+        # Also, if coverage is high enough, EXIT NOW!
         # ----------------------------------------------------------------------
         c_img, d_img = _process_images(c_img_raw, d_img_raw, args)
         assert c_img.shape == (100,100,3), c_img.shape
@@ -133,7 +137,18 @@ def run(args, cam, p):
             d_tail = "d_img_{}.png".format(str(i).zfill(2))
             img_path = join(C.DVRK_IMG_PATH, d_tail)
             cv2.imwrite(img_path, d_img)
-        print('  just saved to: {}'.format(img_path))
+        print('just saved to: {}\n'.format(img_path))
+        U.single_means(c_img, depth=False)
+        U.single_means(d_img, depth=True)
+
+        coverage = U.calculate_coverage(c_img)
+        stats['coverage'].append(coverage)
+        if coverage > COVERAGE_SUCCESS:
+            print('\nCOVERAGE SUCCESS: {:.3f} > {:.3f}, exiting ...\n'.format(
+                    coverage, COVERAGE_SUCCESS))
+            break
+        else:
+            print('\ncurrent coverage: {:.3f}\n'.format(coverage))
         print('  now wait a few seconds for network to run')
         time.sleep(5)
 
@@ -154,7 +169,8 @@ def run(args, cam, p):
         # STEP 3.5, only if we're not on the first action, if current image is
         # too similar to the old one, move the target points closer towards the
         # center of the cloth plane. An approximation but likely 'good enough'.
-        # It does assume the net would predict a similiar action, though ...
+        # It does assume the net would predict a similiar action, though ... and
+        # doesn't handle the case of even the compressed version missing ...
         # ----------------------------------------------------------------------
         if i > 0:
             prev_c = stats['c_img'][-1]
@@ -163,15 +179,19 @@ def run(args, cam, p):
             diff_l2_d = np.linalg.norm(d_img - prev_d) / np.prod(d_img.shape)
             diff_ss_c = compare_ssim(c_img, prev_c, multichannel=True)
             diff_ss_d = compare_ssim(d_img[:,:,0], prev_d[:,:,0])
-            print('  (c) diff L2: {:.3f}'.format(diff_l2_c))
+            print('\n  (c) diff L2: {:.3f}'.format(diff_l2_c))
             print('  (d) diff L2: {:.3f}'.format(diff_l2_d))
             print('  (c) diff SS: {:.3f}'.format(diff_ss_c))
-            print('  (d) diff SS: {:.3f}'.format(diff_ss_d))
+            print('  (d) diff SS: {:.3f}\n'.format(diff_ss_d))
+            stats['diff_l2_c'].append(diff_l2_c)
+            stats['diff_l2_d'].append(diff_l2_d)
+            stats['diff_ss_c'].append(diff_ss_c)
+            stats['diff_ss_d'].append(diff_ss_d)
 
             # Apply action 'compression'? A 0.95 cutoff empirically works well.
             ss_thresh = 0.95
             if diff_ss_c > ss_thresh:
-                print('structural similiarity exceeds {}'.format(ss_thresh))
+                print('NOTE structural similiarity exceeds {}'.format(ss_thresh))
                 action[0] = action[0] * 0.9
                 action[1] = action[1] * 0.9
                 print('revised action after \'compression\': {}'.format(action))
@@ -179,9 +199,8 @@ def run(args, cam, p):
         # ----------------------------------------------------------------------
         # STEP 4. If the output would result in a dangerous position, human
         # stops by hitting ESC key. Otherwise, press any other key to continue.
-        # ALSO this is where the human should terminate the episode!
+        # The human should NOT normally be using this !!
         # ----------------------------------------------------------------------
-        print(c_img.shape, d_img.shape)
         title = '{} -- ESC TO CANCEL (Or if episode done)'.format(action)
         if args.use_color:
             exit = U.call_wait_key( cv2.imshow(title, c_img) )
@@ -189,6 +208,8 @@ def run(args, cam, p):
             exit = U.call_wait_key( cv2.imshow(title, d_img) )
         cv2.destroyAllWindows()
         if exit:
+            print('Warning: why are we exiting here?')
+            print('It should exit naturally due to (a) coverage or (b) time limits.')
             break
 
         # ----------------------------------------------------------------------
@@ -207,10 +228,11 @@ def run(args, cam, p):
 
         # ----------------------------------------------------------------------
         # STEP 6. Record statistics. Sleep just in case, also reset images.
+        # Don't save raw images -- causes file sizes to blow up.
         # ----------------------------------------------------------------------
         stats['actions'].append(action)
-        stats['c_img_raw'].append(c_img_raw)
-        stats['d_img_raw'].append(d_img_raw)
+        #stats['c_img_raw'].append(c_img_raw)
+        #stats['d_img_raw'].append(d_img_raw)
         stats['c_img'].append(c_img)
         stats['d_img'].append(d_img)
         cam.set_color_none()
@@ -219,13 +241,20 @@ def run(args, cam, p):
         time.sleep(3)
 
     # Final book-keeping and return statistics.
+    coverage = U.calculate_coverage(c_img)
+    stats['coverage'].append(coverage)
+    print('final coverage: {:.3f}'.format(coverage))
+    print('  len(coverage): {}'.format(len(stats['coverage'])))
+    print('  len(c_img): {}'.format(len(stats['c_img'])))
+
     if args.use_color:
         save_path = join('results', 'tier{}_color'.format(args.tier))
     else:
         save_path = join('results', 'tier{}_depth'.format(args.tier))
     if not os.path.exists(save_path):
         os.makedirs(save_path, exist_ok=True)
-    count = len([x for x in os.listdir('results') if 'ep_' in x and '.pkl' in x])
+
+    count = len([x for x in os.listdir(save_path) if 'ep_' in x and '.pkl' in x])
     save_path = join(save_path, 'ep_{}.pkl'.format(str(count).zfill(3)))
     print('All done with episode! Saving stats to: {}'.format(save_path))
     with open(save_path, 'wb') as fh:
