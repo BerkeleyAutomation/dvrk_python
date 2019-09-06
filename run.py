@@ -145,6 +145,7 @@ def run(args, cam, p):
         coverage = U.calculate_coverage(c_img)
 
         # Ensures we save the final image in case we exit and get high coverage.
+        # Make sure it happens BEFORE the `break` command below so we get final imgs.
         stats['coverage'].append(coverage)
         #stats['c_img_raw'].append(c_img_raw)
         #stats['d_img_raw'].append(d_img_raw)
@@ -169,7 +170,7 @@ def run(args, cam, p):
                 [join(C.DVRK_IMG_PATH,x) for x in os.listdir(C.DVRK_IMG_PATH) \
                     if x[-4:]=='.txt']
         )
-        assert len(dvrk_action_paths) > 0, 'Did you run the neural net code?'
+        assert len(dvrk_action_paths) > 0, 'Did you run the neural net code??'
         action = np.loadtxt(dvrk_action_paths[-1])
         print('neural net says: {}'.format(action))
         stats['actions'].append(action)
@@ -178,12 +179,12 @@ def run(args, cam, p):
         # STEP 3.5, only if we're not on the first action, if current image is
         # too similar to the old one, move the target points closer towards the
         # center of the cloth plane. An approximation but likely 'good enough'.
-        # It does assume the net would predict a similiar action, though ... and
-        # doesn't handle the case of even the compressed version missing ...
+        # It does assume the net would predict a similiar action, though ...
         # ----------------------------------------------------------------------
         if i > 0:
-            prev_c = stats['c_img'][-1]
-            prev_d = stats['d_img'][-1]
+            # AH! Go to -2 because I modified code to append (c_img,d_img) above.
+            prev_c = stats['c_img'][-2]
+            prev_d = stats['d_img'][-2]
             diff_l2_c = np.linalg.norm(c_img - prev_c) / np.prod(c_img.shape)
             diff_l2_d = np.linalg.norm(d_img - prev_d) / np.prod(d_img.shape)
             diff_ss_c = compare_ssim(c_img, prev_c, multichannel=True)
