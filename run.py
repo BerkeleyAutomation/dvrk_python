@@ -147,8 +147,6 @@ def run(args, cam, p):
         # Ensures we save the final image in case we exit and get high coverage.
         # Make sure it happens BEFORE the `break` command below so we get final imgs.
         stats['coverage'].append(coverage)
-        #stats['c_img_raw'].append(c_img_raw)
-        #stats['d_img_raw'].append(d_img_raw)
         stats['c_img'].append(c_img)
         stats['d_img'].append(d_img)
 
@@ -249,11 +247,29 @@ def run(args, cam, p):
         print('Reset color/depth in camera class, waiting a few seconds ...')
         time.sleep(3)
 
+    # If we ended up using all actions above, we really need one more image.
+    if len(stats['c_img']) == args.max_ep_length:
+        assert len(stats['coverage']) == args.max_ep_length, len(stats['coverage'])
+        c_img_raw = None
+        d_img_raw = None
+        print('Waiting for FINAL c_img, & d_img; please press ENTER in the appropriate tab')
+        while c_img_raw is None:
+            c_img_raw = cam.read_color_data()
+        while d_img_raw is None:
+            d_img_raw = cam.read_depth_data()
+        c_img, d_img = _process_images(c_img_raw, d_img_raw, args)
+        coverage = U.calculate_coverage(c_img)
+        stats['coverage'].append(coverage)
+        stats['c_img'].append(c_img)
+        stats['d_img'].append(d_img)
+        print('(for full length episode) final coverage: {:.3f}'.format(coverage))
+
     # Final book-keeping and return statistics.
-    coverage = U.calculate_coverage(c_img)
-    print('final coverage: {:.3f}'.format(coverage))
+    print('\nEPISODE DONE!')
+    print('  coverage: {}'.format(stats['coverage']))
     print('  len(coverage): {}'.format(len(stats['coverage'])))
     print('  len(c_img): {}'.format(len(stats['c_img'])))
+    print('  len(d_img): {}'.format(len(stats['d_img'])))
     print('  len(actions): {}'.format(len(stats['actions'])))
 
     if args.use_color:
