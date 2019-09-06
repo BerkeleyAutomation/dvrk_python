@@ -102,6 +102,7 @@ def run(args, cam, p):
     """Run one episode, record statistics, etc."""
     stats = defaultdict(list)
     COVERAGE_SUCCESS = 0.92
+    exponent = 0
 
     for i in range(args.max_ep_length):
         print('\n*************************************')
@@ -142,7 +143,14 @@ def run(args, cam, p):
         U.single_means(d_img, depth=True)
 
         coverage = U.calculate_coverage(c_img)
+
+        # Ensures we save the final image in case we exit and get high coverage.
         stats['coverage'].append(coverage)
+        #stats['c_img_raw'].append(c_img_raw)
+        #stats['d_img_raw'].append(d_img_raw)
+        stats['c_img'].append(c_img)
+        stats['d_img'].append(d_img)
+
         if coverage > COVERAGE_SUCCESS:
             print('\nCOVERAGE SUCCESS: {:.3f} > {:.3f}, exiting ...\n'.format(
                     coverage, COVERAGE_SUCCESS))
@@ -164,6 +172,7 @@ def run(args, cam, p):
         assert len(dvrk_action_paths) > 0, 'Did you run the neural net code?'
         action = np.loadtxt(dvrk_action_paths[-1])
         print('neural net says: {}'.format(action))
+        stats['actions'].append(action)
 
         # ----------------------------------------------------------------------
         # STEP 3.5, only if we're not on the first action, if current image is
@@ -191,10 +200,14 @@ def run(args, cam, p):
             # Apply action 'compression'? A 0.95 cutoff empirically works well.
             ss_thresh = 0.95
             if diff_ss_c > ss_thresh:
+                exponent += 1
                 print('NOTE structural similiarity exceeds {}'.format(ss_thresh))
-                action[0] = action[0] * 0.9
-                action[1] = action[1] * 0.9
-                print('revised action after \'compression\': {}'.format(action))
+                action[0] = action[0] * (0.9 ** exponent)
+                action[1] = action[1] * (0.9 ** exponent)
+                print('revised action after \'compression\': {} w/exponent {}'.format(
+                        action, exponent))
+            else:
+                exponent = 0
  
         # ----------------------------------------------------------------------
         # STEP 4. If the output would result in a dangerous position, human
@@ -230,11 +243,6 @@ def run(args, cam, p):
         # STEP 6. Record statistics. Sleep just in case, also reset images.
         # Don't save raw images -- causes file sizes to blow up.
         # ----------------------------------------------------------------------
-        stats['actions'].append(action)
-        #stats['c_img_raw'].append(c_img_raw)
-        #stats['d_img_raw'].append(d_img_raw)
-        stats['c_img'].append(c_img)
-        stats['d_img'].append(d_img)
         cam.set_color_none()
         cam.set_depth_none()
         print('Reset color/depth in camera class, waiting a few seconds ...')
@@ -242,10 +250,10 @@ def run(args, cam, p):
 
     # Final book-keeping and return statistics.
     coverage = U.calculate_coverage(c_img)
-    stats['coverage'].append(coverage)
     print('final coverage: {:.3f}'.format(coverage))
     print('  len(coverage): {}'.format(len(stats['coverage'])))
     print('  len(c_img): {}'.format(len(stats['c_img'])))
+    print('  len(actions): {}'.format(len(stats['actions'])))
 
     if args.use_color:
         save_path = join('results', 'tier{}_color'.format(args.tier))
