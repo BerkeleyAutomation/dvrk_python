@@ -146,6 +146,8 @@ def process_img_for_net(img):
     """
     # First component 'height', second component 'width'.  Decrease 'height'
     # values to get images higher up, decrease 'width' to make it move left.
+
+    # IF CHANGING THESE, CHECK THAT INPAINTING IS CONSISTENT.
     img = img[135:635, 580:1080]
     assert img.shape[0] == img.shape[1]
 

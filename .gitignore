@@ -21,3 +21,6 @@ nets/
 
 # I prefaced virtualenvs with this.
 venv*
+
+# Saving results here
+results/

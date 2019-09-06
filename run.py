@@ -21,10 +21,12 @@ import time
 import datetime
 import cv2
 import pickle
+import logging
 import numpy as np
 np.set_printoptions(suppress=True)
 from collections import defaultdict
 from os.path import join
+from skimage.measure import compare_ssim
 # Stuff from our code base.
 import utils as U
 import config as C
@@ -56,8 +58,8 @@ def _process_images(c_img, d_img, args, debug=True):
 
     # We `inpaint` to fill in the zero pixels, done on raw depth values. Skip if
     # we're not doing color images due to time? Though we have to be careful if
-    # we want to report both color/depth together?
-    if C.IN_PAINT and (not args.use_color):
+    # we want to report both color/depth together? Eh just do together ...
+    if C.IN_PAINT:
         d_img = U.inpaint_depth_image(d_img)
 
     # Process image, but this really means cropping!
@@ -107,20 +109,20 @@ def run(args, cam, p):
         # STEP 1: query the image from the camera class using `cam`. To avoid
         # the flashing strobe light, you have to move to the tab with the camera.
         # ----------------------------------------------------------------------
-        c_img = None
-        d_img = None
+        c_img_raw = None
+        d_img_raw = None
         print('Waiting for c_img, & d_img; please press ENTER in the appropriate tab')
-        while c_img is None:
-            c_img = cam.read_color_data()
-        while d_img is None:
-            d_img = cam.read_depth_data()
-        print('  obtained the c_img and d_img')
+        while c_img_raw is None:
+            c_img_raw = cam.read_color_data()
+        while d_img_raw is None:
+            d_img_raw = cam.read_depth_data()
+        print('  obtained the (raw) c_img and d_img')
 
         # ----------------------------------------------------------------------
         # STEP 2: process image and save as a 100x100 png, see `camera.py` for some
         # tests. Image must be saved in specified DVRK_IMG_PATH for the net to see.
         # ----------------------------------------------------------------------
-        c_img, d_img = _process_images(c_img, d_img, args)
+        c_img, d_img = _process_images(c_img_raw, d_img_raw, args)
         assert c_img.shape == (100,100,3), c_img.shape
         assert d_img.shape == (100,100,3), d_img.shape
         if args.use_color:
@@ -148,6 +150,32 @@ def run(args, cam, p):
         action = np.loadtxt(dvrk_action_paths[-1])
         print('neural net says: {}'.format(action))
 
+        # ----------------------------------------------------------------------
+        # STEP 3.5, only if we're not on the first action, if current image is
+        # too similar to the old one, move the target points closer towards the
+        # center of the cloth plane. An approximation but likely 'good enough'.
+        # It does assume the net would predict a similiar action, though ...
+        # ----------------------------------------------------------------------
+        if i > 0:
+            prev_c = stats['c_img'][-1]
+            prev_d = stats['d_img'][-1]
+            diff_l2_c = np.linalg.norm(c_img - prev_c) / np.prod(c_img.shape)
+            diff_l2_d = np.linalg.norm(d_img - prev_d) / np.prod(d_img.shape)
+            diff_ss_c = compare_ssim(c_img, prev_c, multichannel=True)
+            diff_ss_d = compare_ssim(d_img[:,:,0], prev_d[:,:,0])
+            print('  (c) diff L2: {:.3f}'.format(diff_l2_c))
+            print('  (d) diff L2: {:.3f}'.format(diff_l2_d))
+            print('  (c) diff SS: {:.3f}'.format(diff_ss_c))
+            print('  (d) diff SS: {:.3f}'.format(diff_ss_d))
+
+            # Apply action 'compression'? A 0.95 cutoff empirically works well.
+            ss_thresh = 0.95
+            if diff_ss_c > ss_thresh:
+                print('structural similiarity exceeds {}'.format(ss_thresh))
+                action[0] = action[0] * 0.9
+                action[1] = action[1] * 0.9
+                print('revised action after \'compression\': {}'.format(action))
+ 
         # ----------------------------------------------------------------------
         # STEP 4. If the output would result in a dangerous position, human
         # stops by hitting ESC key. Otherwise, press any other key to continue.
@@ -181,6 +209,8 @@ def run(args, cam, p):
         # STEP 6. Record statistics. Sleep just in case, also reset images.
         # ----------------------------------------------------------------------
         stats['actions'].append(action)
+        stats['c_img_raw'].append(c_img_raw)
+        stats['d_img_raw'].append(d_img_raw)
         stats['c_img'].append(c_img)
         stats['d_img'].append(d_img)
         cam.set_color_none()
@@ -209,7 +239,7 @@ if __name__ == "__main__":
     #parser.add_argument('--use_color', action='store_true') # I'll forget ...
     parser.add_argument('--use_color', type=int) # 1 = True
     parser.add_argument('--tier', type=int)
-    parser.add_argument('--max_ep_length', type=int, default=6)
+    parser.add_argument('--max_ep_length', type=int, default=8)
     args = parser.parse_args()
     assert args.tier is not None
     assert args.use_color is not None

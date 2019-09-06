@@ -66,9 +66,11 @@ def inpaint_depth_image(d_img):
     Also, inpainting is slow, so crop some irrelevant values. But BE CAREFUL!
     Make sure any cropping here will lead to logical consistency with the
     processing in `camera.process_img_for_net` later. For now we crop the 'later
-    part' of each dimension, which still leads to > 2x speed-up.
+    part' of each dimension, which still leads to > 2x speed-up. The
+    window size is 3 which I think means we can get away with a pixel difference
+    of 3 when cropping but to be safe let's add a bit more, 50 pix to each side.
     """
-    d_img = d_img[:800,:1300]
+    d_img = d_img[:685,:1130]
     from perception import (ColorImage, DepthImage)
     print('now in-painting the depth image (shape {})...'.format(d_img.shape))
     start_t = time.time()
