@@ -34,7 +34,7 @@ POL_04 = '/checkpoints/00249'
 POL_05 = 'openai-2019-09-02-19-30-13-323241_tier3_color_50k/checkpoints/00249'
 POL_06 = 'openai-2019-09-02-19-25-40-802588_tier3_depth_50k/checkpoints/00249'
 
-WHICH_POLICY = POL_06  # ADJUST!!
+WHICH_POLICY = POL_02  # ADJUST!!
 NET_FILE = join(HEAD, WHICH_POLICY)
 
 

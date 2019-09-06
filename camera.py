@@ -130,7 +130,7 @@ def depth_3ch_to_255(d_img):
     return d_img    
 
 
-def process_img_for_net(img):
+def process_img_for_net(img, ix=0, iy=0):
     """Do any sort of processing of the image for the neural network.
 
     Only does cropping and re-sizing, for now.
@@ -147,8 +147,9 @@ def process_img_for_net(img):
     # First component 'height', second component 'width'.  Decrease 'height'
     # values to get images higher up, decrease 'width' to make it move left.
 
-    # IF CHANGING THESE, CHECK THAT INPAINTING IS CONSISTENT.
-    img = img[135:635, 580:1080]
+    # IF CHANGING THESE, CHECK THAT INPAINTING IS CONSISTENT. I do this with
+    # inpaint_x and inpaint_y, or ix and iy.
+    img = img[135-ix:635-ix, 580-iy:1080-iy]
     assert img.shape[0] == img.shape[1]
 
     img = cv2.resize(img, (100, 100))

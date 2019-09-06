@@ -60,11 +60,11 @@ def _process_images(c_img, d_img, args, debug=True):
     # we're not doing color images due to time? Though we have to be careful if
     # we want to report both color/depth together? Eh just do together ...
     if C.IN_PAINT:
-        d_img = U.inpaint_depth_image(d_img)
+        d_img = U.inpaint_depth_image(d_img, ix=100, iy=500)
 
     # Process image, but this really means cropping!
-    c_img_crop = camera.process_img_for_net(c_img)
-    d_img_crop = camera.process_img_for_net(d_img)
+    c_img_crop = camera.process_img_for_net(c_img, ix=0, iy=0)
+    d_img_crop = camera.process_img_for_net(d_img, ix=100, iy=500)
     assert c_img_crop.shape[0] == c_img_crop.shape[1], c_img.shape
 
     # Check depth values (in meters), only for the CROPPED regions!

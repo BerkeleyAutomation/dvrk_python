@@ -58,7 +58,7 @@ def call_wait_key(nothing=None, force_exit=False):
     return False
 
 
-def inpaint_depth_image(d_img):
+def inpaint_depth_image(d_img, ix=0, iy=0):
     """Inpaint depth image on raw depth values.
 
     Only import code here to avoid making them required if we're not inpainting.
@@ -69,10 +69,13 @@ def inpaint_depth_image(d_img):
     part' of each dimension, which still leads to > 2x speed-up. The
     window size is 3 which I think means we can get away with a pixel difference
     of 3 when cropping but to be safe let's add a bit more, 50 pix to each side.
+
+    For `ix` and `iy` see `camera.process_img_for_net`, makes inpainting faster.
     """
-    d_img = d_img[:685,:1130]
+    d_img = d_img[ix:685,iy:1130]
     from perception import (ColorImage, DepthImage)
-    print('now in-painting the depth image (shape {})...'.format(d_img.shape))
+    print('now in-painting the depth image (shape {}), ix, iy = {}, {}...'.format(
+            d_img.shape, ix, iy))
     start_t = time.time()
     d_img = DepthImage(d_img)
     d_img = d_img.inpaint()     # inpaint, then get d_img right away
