@@ -90,6 +90,8 @@ def _process_images(c_img, d_img, args, debug=True):
     #d_img_crop_blur = cv2.medianBlur(d_img_crop_blur, 5)
 
     # TODO: adjust mean pixel values?
+    # TODO: adjust brightness somehow? 
+    #c_img = U._adjust_gamma(c_img, gamma = 1.4)
 
     # Let's save externally but we can do quick debugging here.
     U.save_image_numbers('tmp', img=c_img_crop, indicator='c_img', debug=True)
@@ -296,7 +298,7 @@ if __name__ == "__main__":
     #parser.add_argument('--use_color', action='store_true') # I'll forget ...
     parser.add_argument('--use_color', type=int) # 1 = True
     parser.add_argument('--tier', type=int)
-    parser.add_argument('--max_ep_length', type=int, default=8)
+    parser.add_argument('--max_ep_length', type=int, default=10)
     args = parser.parse_args()
     assert args.tier is not None
     assert args.use_color is not None
