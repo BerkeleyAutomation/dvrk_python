@@ -262,6 +262,9 @@ class dvrkArm(object):
 
         [q0,trash] = self.get_current_pose_and_wait()
         qf = pos
+        assert len(qf) > 0, qf
+        assert len(q0) > 0, q0
+        
         if np.allclose(q0,qf):
             return False
         else:

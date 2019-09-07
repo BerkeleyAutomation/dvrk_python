@@ -280,7 +280,10 @@ def run(args, cam, p):
         os.makedirs(save_path, exist_ok=True)
 
     count = len([x for x in os.listdir(save_path) if 'ep_' in x and '.pkl' in x])
-    save_path = join(save_path, 'ep_{}.pkl'.format(str(count).zfill(3)))
+    save_path = join(
+            save_path,
+            'ep_{}_{}.pkl'.format(str(count).zfill(3), U.get_date())
+    )
     print('All done with episode! Saving stats to: {}'.format(save_path))
     with open(save_path, 'wb') as fh:
         pickle.dump(stats, fh)

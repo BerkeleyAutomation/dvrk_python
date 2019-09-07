@@ -7,6 +7,7 @@ import time
 import numpy as np
 from os import path
 from os.path import join
+import datetime
 
 
 # Useful constants.
@@ -44,6 +45,13 @@ def save_image_numbers(head, img, indicator=None, debug=False):
     if debug:
         print('saving to: {}'.format(new_path))
     cv2.imwrite(new_path, img) 
+
+
+def get_date():
+    """Make save path for whatever agent we are training.
+    """
+    date = '{}'.format( datetime.datetime.now().strftime('%Y-%m-%d-%H-%M') )
+    return date
 
 
 def call_wait_key(nothing=None, force_exit=False):
