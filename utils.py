@@ -337,18 +337,18 @@ if __name__ == "__main__":
     print('num images: {}'.format(nb_imgs))
 
     # Ignore if I want to skip.
-    for idx,(img,fname) in enumerate(zip(images,img_paths)):
-        coverage = calculate_coverage(img, display=True)
-        print('  image {} at {} has coverage {:.2f}'.format(idx, fname, coverage*100))
+    if False:
+        for idx,(img,fname) in enumerate(zip(images,img_paths)):
+            coverage = calculate_coverage(img, display=True)
+            print('  image {} at {} has coverage {:.2f}'.format(idx, fname, coverage*100))
 
-    sys.exit()
 
     # Daniel NOTE! I was using this for debugging if we wanted to forcibly
     # adjust pixel values to get them in line with the training data.
     # Fortunately it seems close enough that we don't have to change anything.
 
     # Save any modified images. DEPTH here. Works well.
-    if True:
+    if False:
         for idx,(img,fname) in enumerate(zip(images_d,img_paths_d)):
             print('  on image {}'.format(fname))
             single_means(img, depth=True)
@@ -386,7 +386,7 @@ if __name__ == "__main__":
             cv2.imwrite(savepath, img)
 
     # Now for RGB gamma corrections.
-    if True:
+    if False:
         for idx,(img,fname) in enumerate(zip(images,img_paths)):
             print('  on image {}'.format(fname))
             single_means(img, depth=False)
@@ -398,3 +398,21 @@ if __name__ == "__main__":
             savepath = fname.replace('tmp','tmp2')
             print('saving to: {}\n'.format(savepath))
             cv2.imwrite(savepath, img)
+
+    # Try de-noising.
+    if True:
+        print('\n\nTRYING DE-NOISING\n')
+        # Depth images are type uint8.
+        for idx,(img,fname) in enumerate(zip(images_d,img_paths_d)):
+            print('  on image {}'.format(fname))
+            img = cv2.fastNlMeansDenoising(img,None,7,7,21)
+            savepath = fname.replace('tmp','tmp2')
+            print('saving to: {}\n'.format(savepath))
+            cv2.imwrite(savepath, img)
+        for idx,(img,fname) in enumerate(zip(images,img_paths)):
+            print('  on image {}'.format(fname))
+            img = cv2.fastNlMeansDenoisingColored(img,None,7,7,7,21)
+            savepath = fname.replace('tmp','tmp2')
+            print('saving to: {}\n'.format(savepath))
+            cv2.imwrite(savepath, img)
+

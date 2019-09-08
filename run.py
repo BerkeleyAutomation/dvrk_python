@@ -89,9 +89,14 @@ def _process_images(c_img, d_img, args, debug=True):
     d_img_crop_blur = cv2.bilateralFilter(d_img_crop, 9, 100, 100)
     #d_img_crop_blur = cv2.medianBlur(d_img_crop_blur, 5)
 
-    # TODO: adjust mean pixel values?
-    # TODO: adjust brightness somehow? 
+    # TODO: adjust mean pixel values and/or brightness? Not currently doing.
     #c_img = U._adjust_gamma(c_img, gamma = 1.4)
+
+    # Sept 7: Actually try de-noising? That might help a lot!!
+    print('Now de-noising (note: color/depth are types {}, {})'.format(
+            c_img_crop.dtype, d_img_crop.dtype))  # d_img is a float
+    c_img_crop = cv2.fastNlMeansDenoisingColored(c_img_crop, None, 7, 7, 7, 21)
+    d_img_crop = cv2.fastNlMeansDenoising(d_img_crop, None, 7, 7, 21)
 
     # Let's save externally but we can do quick debugging here.
     U.save_image_numbers('tmp', img=c_img_crop, indicator='c_img', debug=True)
