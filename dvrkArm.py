@@ -91,7 +91,7 @@ class dvrkArm(object):
         """Callback for the current cartesian position.
         """
         self.__position_cartesian_current = posemath.fromMsg(data.pose)
-        self.__get_position = True
+        # self.__get_position = True
         self.__get_position_event.set()
 
     def __position_joint_current_cb(self, data):
@@ -137,11 +137,11 @@ class dvrkArm(object):
         self.__get_position_event.clear()
 
         # the position is originally not received
-        self.__get_position = False
+        # self.__get_position = False
         # recursively call this function until the position is received
-        self.__get_position_event.wait(20)  # 1 minute at most
+        # self.__get_position_event.wait(20)  # 1 minute at most
 
-        if self.__get_position:
+        if self.__get_position_event.wait(20):  # 1 minute at most
             pos, rot = self.PyKDLFrame_to_NumpyArray(self.__position_cartesian_current)
             if unit == 'deg':
                 rot = U.rad_to_deg(rot)
