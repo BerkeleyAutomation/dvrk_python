@@ -14,11 +14,14 @@ statistics.
 
 At some point on September 6, I made the episode length 10.
 
-Starting on September 8 and beyond for the last week:
+Starting September 8 and beyond for the last week:
   - Follow protocol of starting the cloth, then randomizing which of RGB or
     depth is applied. Then we recreate the cloth as close as we can, and do the
     other experiment.
   - We use the de-noising that Ryan Hoque suggested.
+
+Starting September 9, I'm using a lighter blue cloth, which should more closely
+match what we have in simulation.
 """
 import os
 import cv2
@@ -26,9 +29,38 @@ import sys
 import pickle
 import time
 import numpy as np
-np.set_printoptions(precision=4)
+np.set_printoptions(precision=4, linewidth=200)
 from os.path import join
 from collections import defaultdict
+
+
+def _criteria(x, MONTH_BEGIN=9, DAY_BEGIN=6):
+    """Filter older entries, `x` is full path.
+
+    I started on the 6th but changed the protocol a bit afterwards.
+    """
+
+    # Get only the pickle file name.
+    x = os.path.basename(x)
+
+    # Handle first few cases without date.
+    assert x[-4:] == '.pkl', x
+    x = x[:-4]  # remove `.pkl`
+    ss = x.split('_')
+    assert ss[0] == 'ep', ss
+
+    if len(ss) == 2:
+        # Then this was saved without a date. Only include if 'day begin' was 6.
+        return DAY_BEGIN == 6
+    else:
+        date = (ss[2]).split('-')
+        assert len(date) == 5, date
+        year, month, day = int(date[0]), int(date[1]), int(date[2])
+        assert year == 2019, year
+        assert month == 9, month
+        #print(x, date, year, month, day, day >= DAY_BEGIN)
+        begin = day >= DAY_BEGIN
+        return begin
 
 
 def analyze_single(pth, episode_idx=None):
@@ -51,8 +83,14 @@ def analyze_group(head):
     """Go through all experiments of a certain condition."""
     ep_files = sorted([join(head,x) for x in os.listdir(head) if x[-4:]=='.pkl'])
     ss = defaultdict(list)
+    num_counted = 0
 
     for ep in ep_files:
+        if not _criteria(ep):
+            print('SKIPPING {}; it is an older trial.'.format(ep))
+            continue
+        num_counted += 1
+
         print('{}'.format(ep))
         with open(ep, 'r') as fh:
             data = pickle.load(fh)
@@ -75,7 +113,7 @@ def analyze_group(head):
     # Multiply by 100 :-)
     for key in ss.keys():
         ss[key] = np.array(ss[key]) * 100
-    print('\nOverall stats across {} trials:'.format(len(ep_files)))
+    print('\nOverall stats across {} trials:'.format(num_counted))
     print('start: {:.1f} +/- {:.1f}'.format(np.mean(ss['beg']), np.std(ss['beg'])) )
     print('end:   {:.1f} +/- {:.1f}'.format(np.mean(ss['end']), np.std(ss['end'])) )
     print('max:   {:.1f} +/- {:.1f}'.format(np.mean(ss['max']), np.std(ss['max'])) )
@@ -83,14 +121,14 @@ def analyze_group(head):
     print('avg:   {:.1f} +/- {:.1f}'.format(np.mean(ss['avg']), np.std(ss['avg'])) )
 
     # In readable format for LaTeX:
-    print('\nCopy and paste this for LaTeX:\nstart, end, max, mean')
-    print('{:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} \\\\ '.format(
+    _str = '& {:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} \\\\'.format(
             np.mean(ss['beg']),np.std(ss['beg']),
             np.mean(ss['end']),np.std(ss['end']),
             np.mean(ss['max']),np.std(ss['max']),
             np.mean(ss['avg']),np.std(ss['avg']),
-        )
     )
+    #print(_str)
+    return _str, num_counted
 
 
 if __name__ == "__main__":
@@ -102,34 +140,44 @@ if __name__ == "__main__":
     print('ANALYZING TIER 1 COLOR')
     print('*********************************************\n')
     head = join('results', 'tier1_color')
-    analyze_group(head)
+    str1, nb1 = analyze_group(head)
 
     print('\n*********************************************')
     print('ANALYZING TIER 1 DEPTH')
     print('*********************************************\n')
     head = join('results', 'tier1_depth')
-    analyze_group(head)
+    str2, nb2 = analyze_group(head)
 
     print('\n*********************************************')
     print('ANALYZING TIER 2 COLOR')
     print('*********************************************\n')
     head = join('results', 'tier2_color')
-    analyze_group(head)
+    str3, nb3 = analyze_group(head)
 
     print('\n*********************************************')
     print('ANALYZING TIER 2 DEPTH')
     print('*********************************************\n')
     head = join('results', 'tier2_depth')
-    analyze_group(head)
+    str4, nb4 = analyze_group(head)
 
     print('\n*********************************************')
     print('ANALYZING TIER 3 COLOR')
     print('*********************************************\n')
     head = join('results', 'tier3_color')
-    analyze_group(head)
+    str5, nb5 = analyze_group(head)
 
     print('\n*********************************************')
     print('ANALYZING TIER 3 DEPTH')
     print('*********************************************\n')
     head = join('results', 'tier3_depth')
-    analyze_group(head)
+    str6, nb6 = analyze_group(head)
+
+    print('\nNumber of trials we record:')
+    print(nb1, nb2, nb3, nb4, nb5, nb6)
+    print('\n\nCopy and paste this for LaTeX:\nstart, end, max, mean')
+    print('T1 RGB  '+ str1)
+    print('T1 Dep. '+ str2)
+    print('T2 RGB  '+ str3)
+    print('T2 Dep. '+ str4)
+    print('T3 RGB  '+ str5)
+    print('T3 Dep. '+ str6)
