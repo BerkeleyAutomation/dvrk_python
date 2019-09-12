@@ -75,6 +75,8 @@ def _process_images(c_img, d_img, args, debug=True):
         print('  mean: {:.3f}'.format(np.mean(d_img_crop)))
         print('  medi: {:.3f}'.format(np.median(d_img_crop)))
         print('  std: {:.3f}'.format(np.std(d_img_crop)))
+        print('also, types for color/depth: {},{}'.format(
+                c_img_crop.dtype, d_img_crop.dtype))
         print('')
 
     # Let's process depth, from the cropped one, b/c we don't want values

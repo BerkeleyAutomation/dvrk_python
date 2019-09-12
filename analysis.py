@@ -34,7 +34,7 @@ from os.path import join
 from collections import defaultdict
 
 
-def _criteria(x, MONTH_BEGIN=9, DAY_BEGIN=6):
+def _criteria(x, MONTH_BEGIN=9, DAY_BEGIN=7):
     """Filter older entries, `x` is full path.
 
     I started on the 6th but changed the protocol a bit afterwards.

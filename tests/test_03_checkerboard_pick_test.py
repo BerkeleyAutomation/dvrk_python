@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     # Do this just to do one action, to check if calibration is working. Make
     # dx,dy both zero so the robot does not move to a second spot.
-    x = -1.0
+    x = 1.0
     y = 1.0
     dx = 0.0
     dy = 0.0
