@@ -22,6 +22,10 @@ Starting September 8 and beyond for the last week:
 
 Starting September 9, I'm using a lighter blue cloth, which should more closely
 match what we have in simulation.
+
+NOTE: just realized, if doing 9 actions, such as in:
+    results/tier2_color/ep_020_2019-09-13-11-52.pkl
+for some reason it records the coverage twice. Oops! Let's correct for that.
 """
 import os
 import cv2

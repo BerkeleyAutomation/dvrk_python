@@ -75,6 +75,8 @@ def _process_images(c_img, d_img, args, debug=True):
         print('  mean: {:.3f}'.format(np.mean(d_img_crop)))
         print('  medi: {:.3f}'.format(np.median(d_img_crop)))
         print('  std: {:.3f}'.format(np.std(d_img_crop)))
+        print('also, types for color/depth: {},{}'.format(
+                c_img_crop.dtype, d_img_crop.dtype))
         print('')
 
     # Let's process depth, from the cropped one, b/c we don't want values
@@ -279,12 +281,19 @@ def run(args, cam, p):
     print('  len(d_img): {}'.format(len(stats['d_img'])))
     print('  len(actions): {}'.format(len(stats['actions'])))
 
+    # File path shenanigans.
     if args.use_color:
-        save_path = join('results', 'tier{}_color'.format(args.tier))
+        if args.use_other_color:
+            save_path = join('results', 'tier{}_color_yellowcloth'.format(args.tier))
+        else:
+            save_path = join('results', 'tier{}_color'.format(args.tier))
     else:
-        save_path = join('results', 'tier{}_depth'.format(args.tier))
+        if args.use_other_color:
+            save_path = join('results', 'tier{}_depth_yellowcloth'.format(args.tier))
+        else:
+            save_path = join('results', 'tier{}_depth'.format(args.tier))
     if not os.path.exists(save_path):
-        os.makedirs(save_path, exist_ok=True)
+        os.makedirs(save_path)
 
     count = len([x for x in os.listdir(save_path) if 'ep_' in x and '.pkl' in x])
     save_path = join(
@@ -300,7 +309,7 @@ def run(args, cam, p):
 if __name__ == "__main__":
     # I would just set all to reasonable defaults, or put them in the config file.
     parser= argparse.ArgumentParser()
-    #parser.add_argument('--use_color', action='store_true') # I'll forget ...
+    parser.add_argument('--use_other_color', action='store_true')
     parser.add_argument('--use_color', type=int) # 1 = True
     parser.add_argument('--tier', type=int)
     parser.add_argument('--max_ep_length', type=int, default=10)
