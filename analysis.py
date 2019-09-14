@@ -36,6 +36,7 @@ import numpy as np
 np.set_printoptions(precision=4, linewidth=200)
 from os.path import join
 from collections import defaultdict
+SAVE_IMAGES = True
 
 
 def _criteria(x, MONTH_BEGIN=9, DAY_BEGIN=7):
@@ -89,6 +90,10 @@ def analyze_group(head):
     ss = defaultdict(list)
     num_counted = 0
 
+    image_path = head.replace('tier','img_tier')
+    if not os.path.exists(image_path):
+        os.makedirs(image_path)
+
     for ep in ep_files:
         if not _criteria(ep):
             print('SKIPPING {}; it is an older trial.'.format(ep))
@@ -110,9 +115,24 @@ def analyze_group(head):
         # WAIT --- I think we want max/min/avg AFTER the starting coverage!
         ss['max'].append( np.max(data['coverage'][1:]) )
         ss['min'].append( np.min(data['coverage'][1:]) )
-        ss['avg'].append( np.mean(data['coverage'][1:]) )
+        # Special case ... I think I recorded duplicate coverage.
+        if len(data['actions']) == 9:
+            assert len(data['d_img']) == 11, len(data['d_img'])
+            ss['avg'].append( np.mean(data['coverage'][1:-1]) )  # duplicate at end, so up to -1
+        else:
+            ss['avg'].append( np.mean(data['coverage'][1:]) )
         ss['beg'].append( data['coverage'][0] )
         ss['end'].append( data['coverage'][-1] )
+
+        # Save images here.
+        nc = num_counted  # Use as an episode index, sort of ...
+        for t, (cimg, dimg) in enumerate(zip(data['c_img'],data['d_img'])):
+            c_path = join(image_path,
+                          'c_img_ep_{}_t_{}.png'.format(str(nc).zfill(2), str(t).zfill(2)))
+            d_path = join(image_path,
+                          'd_img_ep_{}_t_{}.png'.format(str(nc).zfill(2), str(t).zfill(2)))
+            cv2.imwrite(filename=c_path, img=cimg)
+            cv2.imwrite(filename=d_path, img=dimg)
 
     # Multiply by 100 :-)
     for key in ss.keys():
