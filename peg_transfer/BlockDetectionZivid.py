@@ -86,39 +86,7 @@ class BlockDetectionZivid():
                     mask_block_morph = cv2.morphologyEx(mask_block_morph, cv2.MORPH_CLOSE, np.ones((4, 4), np.uint8))
                     img_color = cv2.bitwise_and(img_color, img_color, mask=mask_block)
 
-                    # Blurring
-                    val = 5
-                    blur = cv2.medianBlur(img_color, val)
-                    gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
-
-                    # CLAHE
-                    clahe_obj = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-                    histeq = clahe_obj.apply(gray)
-                    # histeq = cv2.equalizeHist(gray)
-
-                    # Canny Edge detection
-                    edge = cv2.Canny(blur, 100, 200)
-                    _, contours, _ = cv2.findContours(edge.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                    # if len(cnts) == 2:  cnts = cnts[0]
-                    # elif len(cnts) == 3:    cnts = cnts[1]
-
-                    # Contour sorting & Thresholding by area
-                    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
-                    # for i in range(len(contours)):
-                    #     if cv2.contourArea(contours[i]) < 10.0:
-                    #         contours = contours[:i]
-                    #         break
-
-                    # for i in range(len(contours)):
-                    #     print cv2.contourArea(contours[i])
-
-                    # epsilon = 0.008 * cv2.arcLength(contours[0], True)
-                    # approx = cv2.approxPolyDP(contours[0], epsilon, True)
-                    # hull = cv2.convexHull(contours[0])
-
-                    # cv2.drawContours(img1, [hull], -1, (0, 255, 0), 1)
-                    # cv2.drawContours(img1, contours[2], -1, (0, 0, 255), 3)
-
+                    # Image showing
                     cv2.imshow("color", img_color)
                     # cv2.imshow("depth", img_depth)
                     # cv2.imshow("blurred", blur)
