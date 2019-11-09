@@ -40,6 +40,11 @@ class dvrkClothSim(threading.Thread):
             self.rot_org[0] = rot*3.141592/180.0
         self.pos_org = pos
 
+    def move_to_origin(self):
+        """Move to origin. Should be called after `set_position_origin`.
+        """
+        self.arm.set_pose_linear(self.pos_org, self.rot_org, 'rad')
+
     def move_pose_pickup(self, pos_pick, pos_drop, rot_pick, unit='rad',
             only_do_pick=False):
         """The main arm motion we should be using.
