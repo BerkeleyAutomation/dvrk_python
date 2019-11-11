@@ -123,6 +123,7 @@ def analyze_group(head):
             ss['avg'].append( np.mean(data['coverage'][1:]) )
         ss['beg'].append( data['coverage'][0] )
         ss['end'].append( data['coverage'][-1] )
+        ss['len'].append( len(data['actions']) )
 
         # Save images here.
         nc = num_counted  # Use as an episode index, sort of ...
@@ -134,22 +135,25 @@ def analyze_group(head):
             cv2.imwrite(filename=c_path, img=cimg)
             cv2.imwrite(filename=d_path, img=dimg)
 
-    # Multiply by 100 :-)
+    # Multiply by 100 :-) EXCEPT FOR ACTION.
     for key in ss.keys():
-        ss[key] = np.array(ss[key]) * 100
+        if key != 'len':
+            ss[key] = np.array(ss[key]) * 100
     print('\nOverall stats across {} trials:'.format(num_counted))
     print('start: {:.1f} +/- {:.1f}'.format(np.mean(ss['beg']), np.std(ss['beg'])) )
     print('end:   {:.1f} +/- {:.1f}'.format(np.mean(ss['end']), np.std(ss['end'])) )
     print('max:   {:.1f} +/- {:.1f}'.format(np.mean(ss['max']), np.std(ss['max'])) )
     print('min:   {:.1f} +/- {:.1f}'.format(np.mean(ss['min']), np.std(ss['min'])) )
     print('avg:   {:.1f} +/- {:.1f}'.format(np.mean(ss['avg']), np.std(ss['avg'])) )
+    print('len:   {:.1f} +/- {:.1f}'.format(np.mean(ss['len']), np.std(ss['len'])) )
 
     # In readable format for LaTeX:
     _str = '& {:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} & {:.1f} +/- {:.1f} \\\\'.format(
             np.mean(ss['beg']),np.std(ss['beg']),
             np.mean(ss['end']),np.std(ss['end']),
             np.mean(ss['max']),np.std(ss['max']),
-            np.mean(ss['avg']),np.std(ss['avg']),
+            #np.mean(ss['avg']),np.std(ss['avg']), # remove and replace with the average
+            np.mean(ss['len']),np.std(ss['len']),
     )
     #print(_str)
     return _str, num_counted
@@ -211,9 +215,9 @@ if __name__ == "__main__":
     print('\nNumber of trials we record:')
     print(nb1, nb2, nb3, nb4, nb5, nb6)
     print('\n\nCopy and paste this for LaTeX:\nstart, end, max, mean')
-    print('T1 RGB  '+ str1)
-    print('T1 Dep. '+ str2)
-    print('T2 RGB  '+ str3)
-    print('T2 Dep. '+ str4)
-    print('T3 RGB  '+ str5)
-    print('T3 Dep. '+ str6)
+    print('T1 C '+ str1)
+    print('T1 D '+ str2)
+    print('T2 C '+ str3)
+    print('T2 D '+ str4)
+    print('T3 C '+ str5)
+    print('T3 D '+ str6)
