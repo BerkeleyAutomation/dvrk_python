@@ -8,10 +8,15 @@ __pycache__
 *.swo
 *.swp
 
-# Images and results
+# Images
 *.jpg
 *.png
+
+# Text files, pickle files, etc.
 *.txt
+*.p
+*.pkl
+*.json
 
 # Random directories
 data/
